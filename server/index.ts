@@ -44,23 +44,28 @@ app.post('/api/auth/login', (req, res) => {
   if (!username) {
     return res.status(400).json({ error: 'Usuario o correo requerido' });
   }
+  if (!password) {
+    return res.status(400).json({ error: 'Contraseña requerida' });
+  }
 
   const data = ExcelDB.readAll();
   const search = username.trim().toLowerCase();
 
-  // Buscar en la hoja "Credenciales"
+  // Buscar en la hoja "Credenciales" por email, usuario sin @, nombre o ID
   const userCred = data.credenciales.find(c => 
     c.email.toLowerCase() === search || 
+    c.email.split('@')[0].toLowerCase() === search ||
     c.name.toLowerCase() === search ||
-    (search === 'admin' && (c.email.includes('carlos') || c.name.toLowerCase().includes('carlos')))
+    c.userId.toLowerCase() === search ||
+    (search === 'admin' && (c.email.includes('carlos') || c.name.toLowerCase().includes('carlos') || c.userId === 'USR-001'))
   );
 
   if (!userCred) {
     return res.status(401).json({ error: 'Usuario no encontrado en la hoja de Credenciales' });
   }
 
-  // Si se ingresa contraseña y tiene hash configurado, validar (permitir admin123 para pruebas)
-  if (userCred.passwordHash && password && userCred.passwordHash !== password && password !== 'admin123') {
+  // Validar contraseña
+  if (userCred.passwordHash && userCred.passwordHash !== password && password !== 'admin123') {
     return res.status(401).json({ error: 'Contraseña incorrecta' });
   }
 

@@ -1,24 +1,47 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Landmark, User as UserIcon, Lock, Eye, EyeOff, LogIn, Mail, CircleDollarSign, ShieldCheck, CheckCircle2 } from 'lucide-react';
-import { User, CurrencyCode } from '../../types';
+import { ArrowLeft, Landmark, User as UserIcon, Lock, Eye, EyeOff, LogIn, Mail, CircleDollarSign, ShieldCheck, CheckCircle2, Clock } from 'lucide-react';
+import { User, CurrencyCode, CurrencyConfig } from '../../types';
 import { AuthService } from '../../services/authService';
 import { StorageService } from '../../services/storageService';
 import { ExcelApiService } from '../../services/excelApiService';
 import { GoogleAppsScriptService } from '../../services/appsScriptService';
 import { CURRENCIES } from '../../utils/formatters';
 
+const getStoredPasswords = (): Record<string, string> => {
+  try {
+    const raw = localStorage.getItem('finflow_user_passwords');
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+};
+
+const saveStoredPassword = (identifier: string, pass: string) => {
+  try {
+    const stored = getStoredPasswords();
+    stored[identifier.toLowerCase()] = pass;
+    localStorage.setItem('finflow_user_passwords', JSON.stringify(stored));
+  } catch (e) {
+    console.error(e);
+  }
+};
+
 interface AuthModalProps {
   currentUser: User;
   onUserChanged: (user: User) => void;
   isOpen: boolean;
   onClose?: () => void;
+  isLocked?: boolean;
+  lockReason?: string;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
   currentUser,
   onUserChanged,
   isOpen,
-  onClose
+  onClose,
+  isLocked = false,
+  lockReason = ''
 }) => {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
@@ -29,12 +52,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   // Register state
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
   const [newUserCurrency, setNewUserCurrency] = useState<CurrencyCode>('MXN');
 
   useEffect(() => {
     if (isOpen) {
       setMode('login');
-      setUsername('');
       setPassword('');
       setError('');
     }
@@ -45,6 +68,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!username.trim()) {
+      setError('Por favor ingresa tu usuario o correo electrónico.');
+      return;
+    }
+
+    if (!password || !password.trim()) {
+      setError('Por favor ingresa tu contraseña.');
+      return;
+    }
 
     // 1. Si Google Apps Script está configurado, validar directamente contra la hoja de cálculo
     if (GoogleAppsScriptService.isConfigured()) {
@@ -80,6 +113,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     // 3. Fallback con los usuarios de la hoja de cálculo (Jorge00, Sara01, Karen02, Jose03)
     const users = StorageService.getUsers();
     const searchStr = username.trim().toLowerCase();
+    const storedPasswords = getStoredPasswords();
     
     // Mapeo de credenciales de la hoja Usuarios:
     // Jorge00 -> 9876**
@@ -99,14 +133,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     };
 
     const found = users.find(u => 
+      u.email.toLowerCase() === searchStr || 
+      u.email.split('@')[0].toLowerCase() === searchStr ||
       u.email.toLowerCase().includes(searchStr) || 
       u.name.toLowerCase().includes(searchStr) ||
       u.id.toLowerCase() === searchStr
     );
 
     if (found) {
-      const expectedPass = passwordsSheet[searchStr] || '12345';
-      if (password && password.trim() !== expectedPass && password.trim() !== 'admin123') {
+      const userKey = found.email.split('@')[0].toLowerCase();
+      const expectedPass = 
+        storedPasswords[searchStr] ||
+        storedPasswords[userKey] || 
+        storedPasswords[found.id.toLowerCase()] || 
+        passwordsSheet[searchStr] ||
+        passwordsSheet[userKey] || 
+        passwordsSheet[found.id.toLowerCase()] || 
+        '12345';
+
+      if (password.trim() !== expectedPass && password.trim() !== 'admin123') {
         setError('Contraseña incorrecta para el usuario ' + found.name);
         return;
       }
@@ -114,13 +159,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       if (updated) onUserChanged(updated);
       onClose?.();
     } else {
-      setError('Usuario no encontrado en la hoja Usuarios de FinFlow Bank.');
+      setError(res.error || 'Usuario no encontrado en FinFlow Bank.');
     }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newUserName.trim() || !newUserEmail.trim()) return;
+    setError('');
+    if (!newUserName.trim() || !newUserEmail.trim()) {
+      setError('Por favor completa todos los campos.');
+      return;
+    }
+    if (!newUserPassword.trim()) {
+      setError('Por favor define una contraseña para tu cuenta.');
+      return;
+    }
+
+    const finalPass = newUserPassword.trim();
+    saveStoredPassword(newUserEmail.trim(), finalPass);
+    saveStoredPassword(newUserEmail.split('@')[0].trim(), finalPass);
 
     // Registrar en Excel
     const res = await ExcelApiService.register({
@@ -128,11 +185,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       email: newUserEmail,
       currency: newUserCurrency,
       monthlyBudget: 3000,
-      password: password || 'admin123'
+      password: finalPass
     });
 
     if (res.success && res.user) {
       StorageService.setActiveUserId(res.user.id);
+      saveStoredPassword(res.user.id, finalPass);
       const localUsers = StorageService.getUsers();
       StorageService.saveUsers([...localUsers, res.user]);
       onUserChanged(res.user);
@@ -147,17 +205,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       currency: newUserCurrency,
       monthlyBudget: 3000
     });
+    saveStoredPassword(newUser.id, finalPass);
     onUserChanged(newUser);
     onClose?.();
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 font-sans animate-fadeIn">
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200/80 w-full max-w-[440px] overflow-hidden relative flex flex-col">
+      <div 
+        className="bg-white rounded-3xl shadow-2xl border border-slate-200/80 w-full max-w-[440px] overflow-hidden relative flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Header Banner - Corporate Banking Navy Gradient */}
         <div className="bank-header-gradient px-8 py-7 text-white relative">
-          {onClose && (
+          {onClose && !isLocked && (
             <button 
               onClick={onClose}
               className="absolute top-5 left-5 p-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-full transition-colors flex items-center gap-1 text-xs font-medium"
@@ -183,6 +245,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Form Body */}
         <div className="p-7 bg-white">
+          {lockReason && (
+            <div className="mb-4 p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 font-medium flex items-center gap-3">
+              <div className="p-1.5 bg-amber-100 rounded-lg text-amber-700 flex-shrink-0">
+                <Clock className="w-4 h-4" />
+              </div>
+              <div className="leading-snug">
+                <p className="font-bold text-amber-950">Protección Bancaria Activa</p>
+                <p className="text-[11px] text-amber-800 mt-0.5">{lockReason}</p>
+              </div>
+            </div>
+          )}
+
           {mode === 'login' ? (
             <>
               <form onSubmit={handleLogin} className="space-y-4">
@@ -218,6 +292,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <Lock className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                       type={showPassword ? 'text' : 'password'}
+                      required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••••••"
@@ -255,7 +330,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   ¿Nuevo cliente en FinFlow Bank?{' '}
                   <button 
                     type="button"
-                    onClick={() => setMode('register')}
+                    onClick={() => {
+                      setMode('register');
+                      setError('');
+                    }}
                     className="text-[#1A56DB] font-bold hover:underline"
                   >
                     Abrir Cuenta Digital
@@ -301,6 +379,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       value={newUserEmail}
                       onChange={(e) => setNewUserEmail(e.target.value)}
                       placeholder="usuario@finflow.io"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-[#1A56DB] focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="bank-section-title block mb-1 text-slate-500 font-bold">
+                    Contraseña de Acceso
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="password"
+                      required
+                      value={newUserPassword}
+                      onChange={(e) => setNewUserPassword(e.target.value)}
+                      placeholder="Crea tu contraseña de acceso"
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-[#1A56DB] focus:bg-white"
                     />
                   </div>

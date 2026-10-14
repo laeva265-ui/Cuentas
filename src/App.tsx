@@ -48,6 +48,63 @@ export const App: React.FC = () => {
     'expense' | 'income' | 'debt' | 'loan'
   >('expense');
 
+  // Session & Inactivity State (1 minute auto-logout)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    const isAuth = sessionStorage.getItem('finflow_authenticated') === 'true';
+    const lastAct = Number(sessionStorage.getItem('finflow_last_activity') || 0);
+    const isRecent = Date.now() - lastAct < 60000;
+    return isAuth && isRecent;
+  });
+  const [authReason, setAuthReason] = useState<string>('');
+
+  const lastActivityRef = React.useRef<number>(Date.now());
+
+  const recordActivity = React.useCallback(() => {
+    lastActivityRef.current = Date.now();
+    sessionStorage.setItem('finflow_last_activity', Date.now().toString());
+  }, []);
+
+  // Monitor user events across the application
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    recordActivity();
+
+    let throttleTimer: any = null;
+    const handleUserActivity = () => {
+      if (!throttleTimer) {
+        throttleTimer = setTimeout(() => {
+          recordActivity();
+          throttleTimer = null;
+        }, 500);
+      }
+    };
+
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
+    events.forEach(eventName => {
+      window.addEventListener(eventName, handleUserActivity, { passive: true });
+    });
+
+    const interval = setInterval(() => {
+      const inactiveDuration = Date.now() - lastActivityRef.current;
+      if (inactiveDuration >= 60000) {
+        // Auto-logout after 1 min of inactivity
+        setIsAuthenticated(false);
+        sessionStorage.removeItem('finflow_authenticated');
+        setAuthReason('Tu sesión se ha cerrado automáticamente por inactividad (1 minuto). Por seguridad bancaria, ingresa nuevamente tu usuario y contraseña.');
+        setIsAuthModalOpen(true);
+      }
+    }, 1000);
+
+    return () => {
+      events.forEach(eventName => {
+        window.removeEventListener(eventName, handleUserActivity);
+      });
+      clearInterval(interval);
+      if (throttleTimer) clearTimeout(throttleTimer);
+    };
+  }, [isAuthenticated, recordActivity]);
+
   const [paymentModalData, setPaymentModalData] = useState<{
     item: Debt | Loan | null;
     type: 'debt' | 'loan';
@@ -215,6 +272,20 @@ export const App: React.FC = () => {
   const handleUserChanged = (newUser: User) => {
     setCurrentUser(newUser);
     loadUserData(newUser.id);
+    setIsAuthenticated(true);
+    sessionStorage.setItem('finflow_authenticated', 'true');
+    recordActivity();
+    setAuthReason('');
+    setIsAuthModalOpen(false);
+  };
+
+  // Manual logout
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem('finflow_authenticated');
+    sessionStorage.removeItem('finflow_last_activity');
+    setAuthReason('Has cerrado tu sesión de forma segura. Ingresa tu usuario y contraseña para acceder.');
+    setIsAuthModalOpen(true);
   };
 
   // Currency changed
@@ -450,7 +521,11 @@ export const App: React.FC = () => {
         currentUser={currentUser}
         activeTab={activeTab}
         onNavigate={setActiveTab}
-        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onOpenAuth={() => {
+          setAuthReason('');
+          setIsAuthModalOpen(true);
+        }}
+        onLogout={handleLogout}
         onOpenNewTransaction={() => openTransactionModalWithType('expense')}
         onCurrencyChange={handleCurrencyChange}
       />
@@ -544,8 +619,10 @@ export const App: React.FC = () => {
       {/* Modals */}
       <AuthModal
         currentUser={currentUser}
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
+        isOpen={!isAuthenticated || isAuthModalOpen}
+        isLocked={!isAuthenticated}
+        lockReason={authReason}
+        onClose={isAuthenticated ? () => setIsAuthModalOpen(false) : undefined}
         onUserChanged={handleUserChanged}
       />
 

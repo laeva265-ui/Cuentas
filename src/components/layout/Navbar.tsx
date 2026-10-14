@@ -9,6 +9,7 @@ interface NavbarProps {
   activeTab: ActiveTab;
   onNavigate: (tab: ActiveTab) => void;
   onOpenAuth: () => void;
+  onLogout?: () => void;
   onOpenNewTransaction: () => void;
   onCurrencyChange: (currency: CurrencyCode) => void;
 }
@@ -18,6 +19,7 @@ export function Navbar({
   activeTab,
   onNavigate,
   onOpenAuth,
+  onLogout,
   onOpenNewTransaction,
   onCurrencyChange
 }: NavbarProps) {
@@ -184,7 +186,11 @@ export function Navbar({
                   </button>
                   <button
                     onClick={() => {
-                      onOpenAuth();
+                      if (onLogout) {
+                        onLogout();
+                      } else {
+                        onOpenAuth();
+                      }
                       setIsUserMenuOpen(false);
                     }}
                     className="w-full px-4 py-2.5 text-left text-xs sm:text-sm flex items-center gap-2.5 hover:bg-gray-50 text-red-600 font-medium"
