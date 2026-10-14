@@ -1,10 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { Settings, ArrowLeft, Download, Upload, Trash2, Save, User as UserIcon, Link2, Check, RefreshCw, FileSpreadsheet } from 'lucide-react';
+import { Settings, ArrowLeft, Download, Upload, Trash2, Save, User as UserIcon } from 'lucide-react';
 import { User, CurrencyCode } from '../../types';
 import { CURRENCIES } from '../../utils/formatters';
 import { StorageService } from '../../services/storageService';
 import { AuthService } from '../../services/authService';
-import { GoogleAppsScriptService } from '../../services/appsScriptService';
 
 interface SettingsViewProps {
   currentUser: User;
@@ -24,31 +23,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [currency, setCurrency] = useState(currentUser.currency);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Google Apps Script Web App URL state
-  const [scriptUrl, setScriptUrl] = useState(GoogleAppsScriptService.getScriptUrl());
-  const [scriptStatus, setScriptStatus] = useState<string>('');
-  const [isTestingScript, setIsTestingScript] = useState(false);
-
-  const handleSaveScriptUrl = () => {
-    GoogleAppsScriptService.setScriptUrl(scriptUrl);
-    setScriptStatus('URL de Apps Script guardada.');
-    setTimeout(() => setScriptStatus(''), 3000);
-  };
-
-  const handleTestScript = async () => {
-    setIsTestingScript(true);
-    setScriptStatus('Probando conexión con Google Sheets...');
-    GoogleAppsScriptService.setScriptUrl(scriptUrl);
-    const res = await GoogleAppsScriptService.testConnection();
-    setIsTestingScript(false);
-    if (res.success) {
-      setScriptStatus(`Conectado exitosamente. Hojas detectadas: ${res.sheets?.join(', ')}`);
-      onReloadData();
-    } else {
-      setScriptStatus(`Error: ${res.message}`);
-    }
-  };
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -251,80 +225,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     </div>
                   </div>
                 </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Google Sheets Apps Script Sync */}
-          <div className="md:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 bank-card">
-            <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="bg-emerald-100 p-2.5 rounded-xl text-emerald-700">
-                  <FileSpreadsheet className="w-6 h-6" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-slate-800">Conexión a Hoja de Cálculo Google Sheets</h2>
-                  <p className="text-xs text-slate-500">Sincronización en la nube con "FinFlow Bank" vía Google Apps Script</p>
-                </div>
-              </div>
-              <span className={`text-xs px-3 py-1 rounded-full font-bold ${
-                GoogleAppsScriptService.isConfigured() 
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                  : 'bg-amber-50 text-amber-700 border border-amber-200'
-              }`}>
-                {GoogleAppsScriptService.isConfigured() ? '● Vinculado' : '○ No Vinculado'}
-              </span>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  URL de la Aplicación Web (Google Apps Script)
-                </label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Link2 className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="url"
-                      value={scriptUrl}
-                      onChange={(e) => setScriptUrl(e.target.value)}
-                      placeholder="https://script.google.com/macros/s/AKfycb.../exec"
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-11 pr-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#1A56DB]"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleSaveScriptUrl}
-                    className="bg-[#0B1A2E] text-white px-4 py-2.5 rounded-xl font-medium text-sm hover:bg-[#122B4A] transition-colors"
-                  >
-                    Guardar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleTestScript}
-                    disabled={isTestingScript || !scriptUrl}
-                    className="bg-[#1A56DB] text-white px-4 py-2.5 rounded-xl font-medium text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${isTestingScript ? 'animate-spin' : ''}`} />
-                    Probar Conexión
-                  </button>
-                </div>
-                {scriptStatus && (
-                  <p className="mt-2 text-xs font-semibold text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                    {scriptStatus}
-                  </p>
-                )}
-              </div>
-
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-600 space-y-2">
-                <p className="font-bold text-slate-800">📌 Pasos rápidos para obtener la URL de Apps Script:</p>
-                <ol className="list-decimal list-inside space-y-1 text-slate-500 pl-1">
-                  <li>En tu hoja de cálculo <b>FinFlow Bank</b> en Google Drive, ve a <b>Extensiones &gt; Apps Script</b>.</li>
-                  <li>Pega el código generado en el archivo <code>google-apps-script/Codigo.gs</code> del proyecto.</li>
-                  <li>Haz clic en <b>Implementar &gt; Nueva implementación</b> y selecciona <b>Aplicación web</b>.</li>
-                  <li>Configura: <i>Quién tiene acceso: "Cualquier usuario" (Anyone)</i> y pulsa <b>Implementar</b>.</li>
-                  <li>Copia la URL que termina en <code>/exec</code> y pégala arriba.</li>
-                </ol>
               </div>
             </div>
           </div>
