@@ -65,21 +65,6 @@ export function Navbar({
 
         {/* Center/Right Actions */}
         <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
-          {/* Mobile Direct Currency Selector (Pill) */}
-          <div className="sm:hidden flex items-center bg-white/10 rounded-lg px-2 py-1 border border-white/20">
-            <select
-              value={currentUser.currency || 'USD'}
-              onChange={(e) => onCurrencyChange(e.target.value as CurrencyCode)}
-              className="bg-transparent text-white text-xs font-bold outline-none cursor-pointer"
-            >
-              {(Object.entries(CURRENCIES) as [CurrencyCode, CurrencyConfig][]).map(([code]) => (
-                <option key={code} value={code} className="text-[#0B1A2E]">
-                  {code}
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* Desktop/Tablet Currency Selector */}
           <div className="hidden sm:flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1.5 border border-white/20">
             <select
