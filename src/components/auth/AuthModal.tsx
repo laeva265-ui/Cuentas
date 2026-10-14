@@ -53,13 +53,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
-  const [newUserCurrency, setNewUserCurrency] = useState<CurrencyCode>('MXN');
+  const [newUserCurrency, setNewUserCurrency] = useState<CurrencyCode>('USD');
+
+  const resetRegisterFields = () => {
+    setNewUserName('');
+    setNewUserEmail('');
+    setNewUserPassword('');
+    setNewUserCurrency('USD');
+    setError('');
+  };
 
   useEffect(() => {
     if (isOpen) {
       setMode('login');
+      setUsername('');
       setPassword('');
       setError('');
+      resetRegisterFields();
     }
   }, [isOpen]);
 
@@ -193,6 +203,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       saveStoredPassword(res.user.id, finalPass);
       const localUsers = StorageService.getUsers();
       StorageService.saveUsers([...localUsers, res.user]);
+      resetRegisterFields();
       onUserChanged(res.user);
       onClose?.();
       return;
@@ -206,6 +217,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       monthlyBudget: 3000
     });
     saveStoredPassword(newUser.id, finalPass);
+    resetRegisterFields();
     onUserChanged(newUser);
     onClose?.();
   };
@@ -331,8 +343,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <button 
                     type="button"
                     onClick={() => {
+                      resetRegisterFields();
                       setMode('register');
-                      setError('');
                     }}
                     className="text-[#1A56DB] font-bold hover:underline"
                   >
@@ -435,7 +447,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   ¿Ya tienes cuenta activa?{' '}
                   <button 
                     type="button"
-                    onClick={() => setMode('login')}
+                    onClick={() => {
+                      resetRegisterFields();
+                      setMode('login');
+                    }}
                     className="text-[#1A56DB] font-bold hover:underline"
                   >
                     Iniciar Sesión

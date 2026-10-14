@@ -8,7 +8,10 @@ export interface ExcelCredential {
   userId: string;
   name: string;
   email: string;
+  username?: string;
   passwordHash?: string;
+  rol?: string;
+  estado?: string;
   currency: string;
   monthlyBudget: number;
   bio?: string;
@@ -270,15 +273,24 @@ export const ExcelDB = {
     });
 
     return {
-      credenciales: getSheetData<any>('Usuarios').map((row: any) => ({
-        userId: String(row['ID Usuario'] || row['userId'] || '').trim(),
-        name: String(row['Nombre Completo'] || row['name'] || '').trim(),
-        email: String(row['Usuario'] || row['email'] || '').trim() + '@finflow.io',
-        passwordHash: String(row['Contraseña'] || row['passwordHash'] || '12345').trim(),
-        currency: 'USD',
-        monthlyBudget: 3500,
-        createdAt: String(row['Fecha de Registro'] || row['createdAt'] || '2026-09-20').trim()
-      })),
+      credenciales: getSheetData<any>('Usuarios').map((row: any) => {
+        const rawEmail = String(row['Correo'] || row['Correo Electrónico'] || row['email'] || '').trim();
+        const rawUser = String(row['Usuario'] || row['username'] || '').trim();
+        const finalEmail = rawEmail || (rawUser ? (rawUser.includes('@') ? rawUser : `${rawUser}@finflow.io`) : 'usuario@finflow.io');
+
+        return {
+          userId: String(row['ID Usuario'] || row['userId'] || '').trim(),
+          username: rawUser,
+          name: String(row['Nombre Completo'] || row['name'] || '').trim(),
+          email: finalEmail.toLowerCase(),
+          passwordHash: String(row['Contraseña'] || row['passwordHash'] || '12345').trim(),
+          rol: String(row['Rol'] || 'Cliente').trim(),
+          estado: String(row['Estado'] || 'Activo').trim(),
+          currency: 'USD',
+          monthlyBudget: 3500,
+          createdAt: String(row['Fecha de Registro'] || row['createdAt'] || '2026-09-20').trim()
+        };
+      }),
       gastos: getSheetData<any>('Gastos').map((row: any) => ({
         id: String(row['ID Gasto'] || row['id'] || ''),
         date: String(row['Fecha'] || row['date'] || ''),
@@ -317,12 +329,13 @@ export const ExcelDB = {
 
     const usersToSave = (data.credenciales || current.credenciales).map(u => ({
       'ID Usuario': u.userId || u.id,
-      'Usuario': u.email ? u.email.split('@')[0] : u.username || u.name,
+      'Usuario': u.username || (u.email ? (u.email.includes('@') ? u.email.split('@')[0] : u.email) : u.name),
       'Nombre Completo': u.name,
+      'Correo': u.email || '',
       'Contraseña': u.passwordHash || '12345',
-      'Rol': 'Cliente',
-      'Estado': 'Activo',
-      'Fecha de Registro': u.createdAt || '2026-09-20'
+      'Rol': u.rol || (u.userId === 'USR-001' ? 'Administrador' : 'Cliente'),
+      'Estado': u.estado || 'Activo',
+      'Fecha de Registro': u.createdAt || new Date().toISOString().split('T')[0]
     }));
 
     const gastosToSave = (data.gastos || current.gastos).map(g => ({

@@ -93,11 +93,16 @@ app.post('/api/auth/register', (req, res) => {
 
   const data = ExcelDB.readAll();
   const newUserId = `user-${Date.now()}`;
+  const username = email.includes('@') ? email.split('@')[0] : email;
+
   const newCred: ExcelCredential = {
     userId: newUserId,
+    username: username,
     name: name.trim(),
     email: email.trim().toLowerCase(),
-    passwordHash: password || 'admin123',
+    passwordHash: password || '12345',
+    rol: 'Cliente',
+    estado: 'Activo',
     currency: currency || 'USD',
     monthlyBudget: Number(monthlyBudget) || 3000,
     bio: 'Nuevo cliente de FinFlow Bank',
