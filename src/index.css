@@ -122,3 +122,30 @@
 .animate-fadeIn {
   animation: fadeIn 0.35s ease-out;
 }
+
+/* Safe-area insets for modern mobile devices (iPhone notch, Android navigation bar) */
+.safe-area-bottom {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+.safe-area-top {
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+
+/* Fluid typography and overflow handling for responsive screens */
+.break-words-any {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Prevent accidental auto-zoom on iOS Safari when tapping inputs */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  input[type="date"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}

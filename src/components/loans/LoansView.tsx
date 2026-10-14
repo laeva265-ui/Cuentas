@@ -80,64 +80,64 @@ export function LoansView({
       </button>
 
       {/* Page Header */}
-      <div className="bank-card p-6 border-l-4 border-l-[#1A56DB] bg-white rounded-2xl shadow-sm border border-slate-200">
+      <div className="bank-card p-4 sm:p-6 border-l-4 border-l-[#1A56DB] bg-white rounded-2xl shadow-sm border border-slate-200">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-blue-50 rounded-xl text-[#1A56DB]">
-              <HandCoins className="w-8 h-8" />
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="p-2.5 sm:p-3 bg-blue-50 rounded-xl text-[#1A56DB] shrink-0">
+              <HandCoins className="w-6 h-6 sm:w-8 sm:h-8" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-[#0B1A2E]">Mis Préstamos · Gestión P2P</h1>
-              <p className="text-slate-500">Administración de créditos personales, cobros y abonos</p>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#0B1A2E]">Mis Préstamos · Gestión P2P</h1>
+              <p className="text-slate-500 text-xs sm:text-sm md:text-base">Administración de créditos personales, cobros y abonos</p>
             </div>
           </div>
           <button 
             onClick={onAddLoan}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-[#0B1A2E] text-white rounded-xl hover:bg-[#122B4A] transition-colors shadow-sm font-medium"
+            className="w-full sm:w-auto justify-center flex items-center gap-2 px-5 py-2.5 sm:py-3 bg-[#0B1A2E] text-white rounded-xl hover:bg-[#122B4A] transition-colors shadow-sm font-semibold text-xs sm:text-sm"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
             Nuevo Registro
           </button>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bank-card p-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4">
+        <div className="bank-card p-3.5 sm:p-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
-            <span className="bank-section-title text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Total Prestado</span>
-            <div className="flex items-center gap-3 mt-1">
-              <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
-                <ArrowUpRight className="w-5 h-5" />
+            <span className="bank-section-title text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Total Prestado</span>
+            <div className="flex items-center gap-2.5 mt-1">
+              <div className="p-2 bg-blue-50 rounded-lg text-blue-600 shrink-0">
+                <ArrowUpRight className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <span className="text-2xl font-bold text-slate-900">{formatCurrency(totalOriginal, currentUser.currency)}</span>
+              <span className="text-xl sm:text-2xl font-bold text-slate-900 truncate">{formatCurrency(totalOriginal, currentUser.currency)}</span>
             </div>
           </div>
           <p className="text-[11px] text-slate-400 mt-2">Monto total en acuerdos</p>
         </div>
         
         {/* Campo POR PAGAR: Suma del restante que falta para completar los préstamos */}
-        <div className="bank-card p-5 bg-white rounded-2xl border border-amber-200 shadow-sm flex flex-col justify-between bg-amber-50/20">
+        <div className="bank-card p-3.5 sm:p-5 bg-white rounded-2xl border border-amber-200 shadow-sm flex flex-col justify-between bg-amber-50/20">
           <div>
-            <span className="bank-section-title text-xs font-semibold text-amber-700 uppercase tracking-wider mb-2 block">Por Pagar</span>
-            <div className="flex items-center gap-3 mt-1">
-              <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
-                <ArrowDownRight className="w-5 h-5" />
+            <span className="bank-section-title text-[10px] sm:text-xs font-semibold text-amber-700 uppercase tracking-wider mb-1 block">Por Pagar</span>
+            <div className="flex items-center gap-2.5 mt-1">
+              <div className="p-2 bg-amber-50 rounded-lg text-amber-600 shrink-0">
+                <ArrowDownRight className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <span className="text-2xl font-bold text-slate-900">{formatCurrency(totalPorPagar, currentUser.currency)}</span>
+              <span className="text-xl sm:text-2xl font-bold text-slate-900 truncate">{formatCurrency(totalPorPagar, currentUser.currency)}</span>
             </div>
           </div>
           <p className="text-[11px] text-amber-700/80 font-medium mt-2">Restante para completar préstamos</p>
         </div>
 
-        <div className="bank-card p-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div className="bank-card p-3.5 sm:p-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
-            <span className="bank-section-title text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Total Cobrado</span>
-            <div className="flex items-center gap-3 mt-1">
-              <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
-                <CheckCircle className="w-5 h-5" />
+            <span className="bank-section-title text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Total Cobrado</span>
+            <div className="flex items-center gap-2.5 mt-1">
+              <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600 shrink-0">
+                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <span className="text-2xl font-bold text-emerald-600">{formatCurrency(totalCobrado, currentUser.currency)}</span>
+              <span className="text-xl sm:text-2xl font-bold text-emerald-600 truncate">{formatCurrency(totalCobrado, currentUser.currency)}</span>
             </div>
           </div>
           <p className="text-[11px] text-slate-400 mt-2">{settledCount} acuerdo(s) saldado(s)</p>

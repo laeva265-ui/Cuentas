@@ -86,59 +86,59 @@ export function DebtsView({
       </button>
 
       {/* Page Header */}
-      <div className="bank-card p-6 border-l-4 border-l-[#D4A853] bg-white rounded-2xl shadow-sm border border-slate-200">
+      <div className="bank-card p-4 sm:p-6 border-l-4 border-l-[#D4A853] bg-white rounded-2xl shadow-sm border border-slate-200">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-amber-50 rounded-xl text-[#D4A853]">
-              <CreditCard className="w-8 h-8" />
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="p-2.5 sm:p-3 bg-amber-50 rounded-xl text-[#D4A853] shrink-0">
+              <CreditCard className="w-6 h-6 sm:w-8 sm:h-8" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-[#0B1A2E]">Mis Deudas · Centro de Crédito</h1>
-              <p className="text-slate-500">Gestión estratégica de pasivos financieros y control de amortización</p>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#0B1A2E]">Mis Deudas · Centro de Crédito</h1>
+              <p className="text-slate-500 text-xs sm:text-sm md:text-base">Gestión estratégica de pasivos financieros y control de amortización</p>
             </div>
           </div>
           <button 
             onClick={onAddDebt}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-[#0B1A2E] text-white rounded-xl hover:bg-[#122B4A] transition-colors shadow-sm font-medium"
+            className="w-full sm:w-auto justify-center flex items-center gap-2 px-5 py-2.5 sm:py-3 bg-[#0B1A2E] text-white rounded-xl hover:bg-[#122B4A] transition-colors shadow-sm font-semibold text-xs sm:text-sm"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
             Registrar Pasivo
           </button>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bank-card p-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="bank-card p-3.5 sm:p-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
-            <span className="bank-section-title text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Saldo Total Pendiente</span>
-            <span className="text-2xl font-bold text-slate-900">{formatCurrency(totalDebt, currentUser.currency)}</span>
+            <span className="bank-section-title text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Saldo Pendiente</span>
+            <span className="text-lg sm:text-2xl font-bold text-slate-900 truncate block">{formatCurrency(totalDebt, currentUser.currency)}</span>
           </div>
-          <p className="text-[11px] text-amber-600/80 font-medium mt-2">Pasivos activos totales</p>
+          <p className="text-[11px] text-amber-600/80 font-medium mt-2">Pasivos activos</p>
         </div>
         
-        <div className="bank-card p-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div className="bank-card p-3.5 sm:p-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
-            <span className="bank-section-title text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Pago Mínimo Mensual</span>
-            <span className="text-2xl font-bold text-slate-900">{formatCurrency(totalMinPayment, currentUser.currency)}</span>
+            <span className="bank-section-title text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Pago Mínimo</span>
+            <span className="text-lg sm:text-2xl font-bold text-slate-900 truncate block">{formatCurrency(totalMinPayment, currentUser.currency)}</span>
           </div>
           <p className="text-[11px] text-slate-400 mt-2">Compromiso mensual</p>
         </div>
 
-        <div className="bank-card p-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div className="bank-card p-3.5 sm:p-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
-            <span className="bank-section-title text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Tasa Ponderada APR</span>
-            <span className="text-2xl font-bold text-slate-900">{weightedApr.toFixed(1)}%</span>
+            <span className="bank-section-title text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Tasa APR</span>
+            <span className="text-lg sm:text-2xl font-bold text-slate-900 truncate block">{weightedApr.toFixed(1)}%</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-2">Costo promedio de crédito</p>
+          <p className="text-[11px] text-slate-400 mt-2">Costo promedio</p>
         </div>
 
-        <div className="bank-card p-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div className="bank-card p-3.5 sm:p-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
-            <span className="bank-section-title text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Deudas Liquidadas</span>
-            <span className="text-2xl font-bold text-emerald-600">{liquidatedCount}</span>
+            <span className="bank-section-title text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Liquidadas</span>
+            <span className="text-lg sm:text-2xl font-bold text-emerald-600 truncate block">{liquidatedCount}</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-2">Créditos finalizados con éxito</p>
+          <p className="text-[11px] text-slate-400 mt-2">Acuerdos saldados</p>
         </div>
       </div>
 

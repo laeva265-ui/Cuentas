@@ -27,6 +27,8 @@ import { FinancialAIAssistant } from './components/ai/FinancialAIAssistant';
 import { SettingsView } from './components/settings/SettingsView';
 import { TransactionModal } from './components/modals/TransactionModal';
 import { PaymentModal } from './components/modals/PaymentModal';
+import { MobileBottomNav } from './components/layout/MobileBottomNav';
+import { PwaInstallPrompt } from './components/pwa/PwaInstallPrompt';
 
 export const App: React.FC = () => {
   // Current active user
@@ -453,8 +455,11 @@ export const App: React.FC = () => {
         onCurrencyChange={handleCurrencyChange}
       />
 
+      {/* PWA Installation Prompt Banner (smart detection) */}
+      <PwaInstallPrompt />
+
       {/* Main Full-Window Content Area */}
-      <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 relative z-10">
+      <div className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 pb-28 md:pb-8 relative z-10">
         <main className="w-full">
           {activeTab === 'dashboard' && (
             <DashboardOverview
@@ -564,6 +569,13 @@ export const App: React.FC = () => {
         availableBalance={calculateAvailableBalance(incomes, loans, debts, expenses)}
         onClose={() => setPaymentModalData({ item: null, type: 'debt' })}
         onSubmitPayment={handlePaymentSubmit}
+      />
+
+      {/* Mobile Bottom Navigation Bar (Visible on mobile/tablet) */}
+      <MobileBottomNav
+        activeTab={activeTab}
+        onNavigate={setActiveTab}
+        onOpenNewTransaction={() => openTransactionModalWithType('expense')}
       />
     </div>
   );

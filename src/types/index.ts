@@ -104,6 +104,8 @@ export interface Debt {
   interestRate: number; // % anual (APR)
   minimumPayment: number;
   dueDate: string; // Fecha de corte o vencimiento
+  startDate?: string;
+  date?: string;
   category: DebtCategory;
   paymentsHistory: DebtPayment[];
   status: 'Activa' | 'En Riesgo' | 'Liquidada';

@@ -210,13 +210,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 </div>
 
                 {/* Advertencia si no alcanza el saldo disponible */}
-                {paymentSource === 'available_balance' && numAmount > availableBalance && (
+                {paymentSource === 'available_balance' && baseNumAmount > availableBalance && (
                   <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs mt-3">
                     <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="font-semibold">Saldo Disponible insuficiente</p>
                       <p className="text-amber-700">
-                        El monto ({formatCurrency(numAmount, currentUser.currency)}) supera tu saldo actual ({formatCurrency(availableBalance, currentUser.currency)}). Si continúas, tu saldo quedará en $0.
+                        El monto ({formatCurrency(baseNumAmount, currentUser.currency)}) supera tu saldo actual ({formatCurrency(availableBalance, currentUser.currency)}). Si continúas, tu saldo quedará en $0.
                       </p>
                     </div>
                   </div>
