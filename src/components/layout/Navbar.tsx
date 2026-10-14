@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Landmark, Plus, User as UserIcon, LogOut, ChevronDown, Repeat, Download, Smartphone } from 'lucide-react';
 import { User, CurrencyCode, ActiveTab, CurrencyConfig } from '../../types';
 import { CURRENCIES } from '../../utils/formatters';
@@ -22,7 +22,27 @@ export function Navbar({
   onCurrencyChange
 }: NavbarProps) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const { isInstallable, isStandalone, isIOS, install } = usePwa();
+
+  // Cerrar automáticamente al hacer clic o tocar fuera del menú en cualquier parte de la pantalla
+  useEffect(() => {
+    if (!isUserMenuOpen) return;
+
+    const handlePointerDownOutside = (event: MouseEvent | TouchEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDownOutside);
+    document.addEventListener('touchstart', handlePointerDownOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDownOutside);
+      document.removeEventListener('touchstart', handlePointerDownOutside);
+    };
+  }, [isUserMenuOpen]);
 
   return (
     <div className="flex flex-col safe-area-top">
@@ -98,7 +118,7 @@ export function Navbar({
           </button>
 
           {/* User Menu */}
-          <div className="relative">
+          <div className="relative" ref={userMenuRef}>
             <button 
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
               className="flex items-center gap-2 hover:bg-white/10 rounded-full sm:rounded-lg p-1 sm:px-2.5 sm:py-1.5 transition-colors border border-transparent hover:border-white/20"
@@ -114,32 +134,42 @@ export function Navbar({
             </button>
 
             {isUserMenuOpen && (
-              <div className="absolute right-0 mt-2 w-60 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 text-gray-800 z-50 animate-in fade-in">
-                <div className="px-4 py-3 border-b border-gray-100">
-                  <p className="font-bold text-[#0B1A2E] text-sm truncate">{currentUser.name}</p>
-                  <p className="text-xs text-gray-500 truncate">{currentUser.email}</p>
-                  <div className="mt-1.5 flex items-center gap-1.5">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
-                      Cuenta FinFlow Digital
-                    </span>
+              <>
+                {/* Transparent Backdrop to detect touches anywhere on the screen */}
+                <div 
+                  className="fixed inset-0 z-40 bg-transparent"
+                  onClick={() => setIsUserMenuOpen(false)}
+                  onTouchStart={() => setIsUserMenuOpen(false)}
+                />
+                <div className="absolute right-0 mt-2 w-60 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 text-gray-800 z-50 animate-in fade-in">
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <p className="font-bold text-[#0B1A2E] text-sm truncate">{currentUser.name}</p>
+                    <p className="text-xs text-gray-500 truncate">{currentUser.email}</p>
+                    <div className="mt-1.5 flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                        Cuenta FinFlow Digital
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                {/* Mobile Full Currency Selector inside menu */}
-                <div className="sm:hidden px-4 py-2 border-b border-gray-100">
-                  <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Moneda Principal</p>
-                  <select
-                    value={currentUser.currency || 'USD'}
-                    onChange={(e) => onCurrencyChange(e.target.value as CurrencyCode)}
-                    className="w-full bg-gray-50 border border-gray-200 text-xs rounded-lg px-2.5 py-1.5 outline-none font-semibold text-slate-800"
-                  >
-                    {(Object.entries(CURRENCIES) as [CurrencyCode, CurrencyConfig][]).map(([code, config]) => (
-                      <option key={code} value={code}>
-                        {config.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  {/* Mobile Full Currency Selector inside menu */}
+                  <div className="sm:hidden px-4 py-2 border-b border-gray-100">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Moneda Principal</p>
+                    <select
+                      value={currentUser.currency || 'USD'}
+                      onChange={(e) => {
+                        onCurrencyChange(e.target.value as CurrencyCode);
+                        setIsUserMenuOpen(false);
+                      }}
+                      className="w-full bg-gray-50 border border-gray-200 text-xs rounded-lg px-2.5 py-1.5 outline-none font-semibold text-slate-800 cursor-pointer"
+                    >
+                      {(Object.entries(CURRENCIES) as [CurrencyCode, CurrencyConfig][]).map(([code, config]) => (
+                        <option key={code} value={code}>
+                          {config.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
                 {isInstallable && !isStandalone && (
                   <div className="px-2 py-1 border-b border-gray-100">
@@ -179,7 +209,8 @@ export function Navbar({
                   </button>
                 </div>
               </div>
-            )}
+            </>
+          )}
           </div>
         </div>
       </header>
