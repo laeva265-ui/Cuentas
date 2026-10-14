@@ -48,16 +48,25 @@ export interface ExcelDebt {
   interestRate: number;
   minimumPayment: number;
   dueDate: string;
+  date?: string;
   category: string;
   status: string;
   notes?: string;
+  paymentsHistory?: Array<{
+    id: string;
+    amount: number;
+    date: string;
+    note?: string;
+    source?: string;
+  }>;
 }
 
 export interface ExcelAbono {
   id: string;
   date: string;
-  loanId: string;
-  personName: string;
+  referenceId: string;
+  type: 'Préstamo' | 'Deuda';
+  concept: string;
   amount: number;
   remainingAmount: number;
   note?: string;
@@ -129,8 +138,9 @@ export const ExcelDB = {
     const rawAbonos = getSheetData<any>('Abonos').map((row: any) => ({
       id: String(row['ID Abono'] || row['id'] || `abn-${Date.now()}`),
       date: String(row['Fecha'] || row['date'] || new Date().toISOString().split('T')[0]),
-      loanId: String(row['ID Préstamo'] || row['loanId'] || ''),
-      personName: String(row['Prestatario'] || row['personName'] || ''),
+      referenceId: String(row['ID Referencia'] || row['ID Préstamo'] || row['ID Deuda'] || row['referenceId'] || row['loanId'] || row['debtId'] || ''),
+      type: (row['Tipo'] || (row['ID Deuda'] ? 'Deuda' : 'Préstamo')) as 'Préstamo' | 'Deuda',
+      concept: String(row['Acreedor / Prestatario'] || row['Prestatario'] || row['Concepto'] || row['Acreedor'] || row['personName'] || ''),
       amount: Number(row['Monto Abonado'] || row['amount'] || 0),
       remainingAmount: Number(row['Saldo Restante'] !== undefined ? row['Saldo Restante'] : row['remainingAmount'] || 0),
       note: String(row['Notas'] || row['note'] || 'Abono registrado'),
@@ -145,7 +155,7 @@ export const ExcelDB = {
 
       // Buscar abonos de este préstamo en la hoja Abonos
       let loanPayments = rawAbonos
-        .filter(a => a.loanId === loanId)
+        .filter(a => a.referenceId === loanId || (a.type === 'Préstamo' && a.concept === row['Prestatario']))
         .map(a => ({
           id: a.id,
           amount: a.amount,
@@ -197,6 +207,68 @@ export const ExcelDB = {
       };
     });
 
+    const rawDeudas = getSheetData<any>('Deudas').map((row: any) => {
+      const debtId = String(row['ID Deuda'] || row['id'] || '');
+      const totalAmount = Number(row['Monto Total'] || row['totalAmount'] || 0);
+      const currentBalance = Number(row['Saldo Restante'] !== undefined ? row['Saldo Restante'] : row['currentBalance'] || 0);
+      const amortized = Math.max(0, totalAmount - currentBalance);
+      const lenderName = String(row['Acreedor / Entidad'] || row['lender'] || 'Entidad');
+
+      // Buscar abonos de esta deuda en la hoja Abonos
+      let debtPayments = rawAbonos
+        .filter(a => a.referenceId === debtId || (a.type === 'Deuda' && a.concept === lenderName))
+        .map(a => ({
+          id: a.id,
+          amount: a.amount,
+          date: a.date,
+          note: a.note || 'Abono a deuda',
+          source: 'available_balance' as const
+        }));
+
+      // Si no hay en la hoja Abonos pero la fila de la deuda tiene columnas Abono 1, Abono 2, etc.
+      if (debtPayments.length === 0) {
+        for (let idx = 1; idx <= 15; idx++) {
+          const abonoVal = row[`Abono ${idx}`];
+          const fechaVal = row[`Fecha ${idx}`] || row[`Fecha Abono ${idx}`] || row['Fecha'] || '2026-10-03';
+          if (abonoVal !== undefined && abonoVal !== null && abonoVal !== '' && Number(abonoVal) > 0) {
+            debtPayments.push({
+              id: `dpay-${debtId}-${idx}`,
+              amount: Number(abonoVal),
+              date: String(fechaVal),
+              note: `Abono #${idx}`,
+              source: 'available_balance' as const
+            });
+          }
+        }
+      }
+
+      // Si aún no hay abonos pero ya se ha amortizado parte de la deuda, crear registro inicial
+      if (debtPayments.length === 0 && amortized > 0) {
+        debtPayments.push({
+          id: `dpay-${debtId}-init`,
+          amount: amortized,
+          date: String(row['Fecha'] || '2026-10-03'),
+          note: 'Abono amortizado registrado',
+          source: 'available_balance' as const
+        });
+      }
+
+      return {
+        id: debtId,
+        date: String(row['Fecha'] || row['date'] || ''),
+        userId: String(row['ID Usuario'] || row['userId'] || ''),
+        lender: lenderName,
+        title: lenderName,
+        totalAmount,
+        minimumPayment: Number(row['Cuota Mensual'] || row['minimumPayment'] || 0),
+        dueDate: String(row['Fecha de Vencimiento'] || row['dueDate'] || ''),
+        interestRate: Number(row['Tasa de Interés'] || 8.5),
+        currentBalance,
+        status: String(row['Estado'] || row['status'] || 'Activa'),
+        paymentsHistory: debtPayments
+      };
+    });
+
     return {
       credenciales: getSheetData<any>('Usuarios').map((row: any) => ({
         userId: String(row['ID Usuario'] || row['userId'] || '').trim(),
@@ -226,19 +298,7 @@ export const ExcelDB = {
         frequency: 'Mensual',
         paymentMethod: String(row['Método de Pago'] || row['paymentMethod'] || 'Transferencia')
       })),
-      deudas: getSheetData<any>('Deudas').map((row: any) => ({
-        id: String(row['ID Deuda'] || row['id'] || ''),
-        date: String(row['Fecha'] || row['date'] || ''),
-        userId: String(row['ID Usuario'] || row['userId'] || ''),
-        lender: String(row['Acreedor / Entidad'] || row['lender'] || 'Entidad'),
-        title: String(row['Acreedor / Entidad'] || row['title'] || 'Deuda'),
-        totalAmount: Number(row['Monto Total'] || row['totalAmount'] || 0),
-        minimumPayment: Number(row['Cuota Mensual'] || row['minimumPayment'] || 0),
-        dueDate: String(row['Fecha de Vencimiento'] || row['dueDate'] || ''),
-        interestRate: 8.5,
-        currentBalance: Number(row['Saldo Restante'] !== undefined ? row['Saldo Restante'] : row['currentBalance'] || 0),
-        status: String(row['Estado'] || row['status'] || 'Activa')
-      })),
+      deudas: rawDeudas,
       prestamos: rawPrestamos,
       abonos: rawAbonos
     };
@@ -303,37 +363,35 @@ export const ExcelDB = {
       return Math.max(1, months);
     };
 
-    const deudasToSave = (data.deudas || current.deudas).map(d => {
-      const start = d.date || new Date().toISOString().split('T')[0];
-      const end = d.dueDate || start;
-      const plazo = calculateMonthsBetween(start, end);
-      const cuota = Math.round((d.totalAmount || 0) / plazo);
-
-      return {
-        'ID Deuda': d.id,
-        'Fecha': start,
-        'ID Usuario': d.userId,
-        'Acreedor / Entidad': d.lender || d.title || 'Entidad',
-        'Monto Total': d.totalAmount || 0,
-        'Cuota Mensual': cuota,
-        'Fecha de Vencimiento': end,
-        'Monto Amortizado': (d.totalAmount || 0) - (d.currentBalance || 0),
-        'Saldo Restante': d.currentBalance || 0,
-        'Estado': d.status || 'Activa'
-      };
-    });
-
-    // Extraer y compilar todos los abonos a guardar tanto en la hoja "Abonos" como en celdas de "Prestamos"
-    const prestamosSource = data.prestamos || current.prestamos;
-    
-    // Mapeo de abonos acumulados
+    // Mapeo acumulado de todos los abonos (tanto de préstamos como de deudas)
     const abonosMap = new Map<string, any>();
-    
-    // 1. Agregar los abonos existentes
     (current.abonos || []).forEach(a => abonosMap.set(a.id, a));
     if (data.abonos) {
       data.abonos.forEach(a => abonosMap.set(a.id, a));
     }
+
+    const deudasSource = data.deudas || current.deudas;
+    const prestamosSource = data.prestamos || current.prestamos;
+
+    // 1. Extraer abonos embebidos en las deudas
+    deudasSource.forEach(d => {
+      if (d.paymentsHistory && Array.isArray(d.paymentsHistory)) {
+        d.paymentsHistory.forEach((p: any, idx: number) => {
+          const abonoId = p.id || `dpay-${d.id}-${idx + 1}`;
+          abonosMap.set(abonoId, {
+            id: abonoId,
+            date: p.date || new Date().toISOString().split('T')[0],
+            referenceId: d.id,
+            type: 'Deuda',
+            concept: d.lender || d.title,
+            amount: p.amount,
+            remainingAmount: d.currentBalance,
+            note: p.note || `Abono a deuda #${idx + 1}`,
+            userId: d.userId || 'USR-001'
+          });
+        });
+      }
+    });
 
     // 2. Extraer abonos embebidos en los préstamos
     prestamosSource.forEach(l => {
@@ -343,29 +401,69 @@ export const ExcelDB = {
           abonosMap.set(abonoId, {
             id: abonoId,
             date: p.date || new Date().toISOString().split('T')[0],
-            loanId: l.id,
-            personName: l.personName,
+            referenceId: l.id,
+            type: 'Préstamo',
+            concept: l.personName,
             amount: p.amount,
             remainingAmount: l.remainingAmount,
-            note: p.note || `Abono #${idx + 1}`,
+            note: p.note || `Abono a préstamo #${idx + 1}`,
             userId: l.userId || 'USR-001'
           });
         });
       }
     });
 
+    // Construir hoja general "Abonos"
     const abonosToSave = Array.from(abonosMap.values()).map(a => ({
       'ID Abono': a.id,
       'Fecha': a.date,
-      'ID Préstamo': a.loanId,
-      'Prestatario': a.personName,
+      'Tipo': a.type || 'Préstamo',
+      'ID Referencia': a.referenceId || a.loanId || a.debtId || '',
+      'Acreedor / Prestatario': a.concept || a.personName || 'Concepto',
       'Monto Abonado': a.amount,
       'Saldo Restante': a.remainingAmount,
       'Notas': a.note || 'Abono registrado',
       'ID Usuario': a.userId
     }));
 
-    // Construir filas de préstamos con celdas individuales para cada abono (Abono 1, Fecha 1, Abono 2, Fecha 2, ...)
+    // Construir filas de Deudas con celdas individuales para cada abono (Abono 1, Fecha 1, Abono 2, Fecha 2, ...)
+    const deudasToSave = deudasSource.map(d => {
+      const start = d.date || new Date().toISOString().split('T')[0];
+      const end = d.dueDate || start;
+      const plazo = calculateMonthsBetween(start, end);
+      const cuota = Math.round((d.totalAmount || 0) / plazo);
+
+      const history = (d.paymentsHistory && Array.isArray(d.paymentsHistory) && d.paymentsHistory.length > 0)
+        ? d.paymentsHistory
+        : Array.from(abonosMap.values()).filter(a => a.referenceId === d.id);
+
+      const rowObj: any = {
+        'ID Deuda': d.id,
+        'Fecha': start,
+        'ID Usuario': d.userId,
+        'Acreedor / Entidad': d.lender || d.title || 'Entidad',
+        'Monto Total': d.totalAmount || 0,
+        'Cuota Mensual': cuota,
+        'Fecha de Vencimiento': end,
+        'Monto Amortizado': (d.totalAmount || 0) - (d.currentBalance || 0),
+        'Saldo Restante': d.currentBalance || 0,
+        'Estado': d.status || 'Activa',
+        'Total Abonos': history.length,
+        'Último Abono': history.length > 0 ? history[history.length - 1].amount : 0,
+        'Fecha Último Abono': history.length > 0 ? history[history.length - 1].date : ''
+      };
+
+      // Celdas dinámicas para cada abono: Abono 1, Fecha 1, Abono 2, Fecha 2...
+      history.forEach((pay: any, idx: number) => {
+        const num = idx + 1;
+        rowObj[`Abono ${num}`] = pay.amount;
+        rowObj[`Fecha ${num}`] = pay.date;
+      });
+
+      return rowObj;
+    });
+
+    // Construir filas de préstamos con celdas individuales para cada abono
     const prestamosToSave = prestamosSource.map(l => {
       const start = l.startDate || new Date().toISOString().split('T')[0];
       const end = l.dueDate || '';
@@ -374,7 +472,7 @@ export const ExcelDB = {
 
       const history = (l.paymentsHistory && Array.isArray(l.paymentsHistory) && l.paymentsHistory.length > 0)
         ? l.paymentsHistory
-        : Array.from(abonosMap.values()).filter(a => a.loanId === l.id);
+        : Array.from(abonosMap.values()).filter(a => a.referenceId === l.id);
 
       const rowObj: any = {
         'ID Préstamo': l.id,
@@ -394,7 +492,6 @@ export const ExcelDB = {
         'Fecha Último Abono': history.length > 0 ? history[history.length - 1].date : ''
       };
 
-      // Agregar celdas dinámicas individuales para cada abono: Abono 1, Fecha 1, Abono 2, Fecha 2, etc.
       history.forEach((pay: any, idx: number) => {
         const num = idx + 1;
         rowObj[`Abono ${num}`] = pay.amount;

@@ -67,14 +67,25 @@ export const App: React.FC = () => {
     const mergeDebts = (remoteDebts: Debt[]) => {
       return remoteDebts.map(remoteD => {
         const localD = localDebts.find(d => d.id === remoteD.id);
-        const history = (localD && localD.paymentsHistory && localD.paymentsHistory.length > 0)
-          ? localD.paymentsHistory
-          : (remoteD.paymentsHistory || []);
-        
+        const remoteHist = remoteD.paymentsHistory || [];
+        const localHist = localD?.paymentsHistory || [];
+
+        const histMap = new Map<string, any>();
+        remoteHist.forEach(h => histMap.set(h.id, h));
+        localHist.forEach(h => histMap.set(h.id, h));
+
         const amortized = Math.max(0, (remoteD.totalAmount || 0) - (remoteD.currentBalance || 0));
-        const finalHistory = history.length > 0
-          ? history
-          : (amortized > 0 ? [{ id: `hist-${remoteD.id}`, amount: amortized, date: remoteD.date || new Date().toISOString().split('T')[0], source: 'available_balance' as const }] : []);
+        let finalHistory = Array.from(histMap.values());
+
+        if (finalHistory.length === 0 && amortized > 0) {
+          finalHistory = [{
+            id: `dpay-${remoteD.id}-init`,
+            amount: amortized,
+            date: remoteD.date || '2026-10-03',
+            note: 'Abono inicial registrado',
+            source: 'available_balance' as const
+          }];
+        }
 
         return {
           ...remoteD,

@@ -243,10 +243,43 @@ function getUserDebts(ss, userId) {
     var row = data[i];
     var rowUserId = String(row[2] || '').trim();
     if (rowUserId === userId) {
+      var debtId = String(row[0] || ('debt-' + i));
       var total = Number(row[4]) || 0;
       var remaining = row[8] !== '' && row[8] !== undefined ? Number(row[8]) : total;
+      var amortized = Math.max(0, total - remaining);
+
+      // Buscar abonos de esta deuda en la hoja Abonos si existe
+      var debtPayments = [];
+      var abonosSheet = ss.getSheetByName('Abonos');
+      if (abonosSheet) {
+        var abData = abonosSheet.getDataRange().getValues();
+        for (var k = 1; k < abData.length; k++) {
+          var refId = String(abData[k][3] || abData[k][2] || '').trim();
+          if (refId === debtId) {
+            debtPayments.push({
+              id: String(abData[k][0] || ('abn-' + k)),
+              date: abData[k][1] instanceof Date ? Utilities.formatDate(abData[k][1], "GMT", "yyyy-MM-dd") : String(abData[k][1] || ''),
+              amount: Number(abData[k][5] || abData[k][4]) || 0,
+              note: String(abData[k][7] || abData[k][6] || 'Abono a deuda'),
+              source: 'available_balance'
+            });
+          }
+        }
+      }
+
+      // Si no hay abonos pero ya se amortizó parte de la deuda
+      if (debtPayments.length === 0 && amortized > 0) {
+        debtPayments.push({
+          id: 'dpay-' + debtId + '-init',
+          date: row[1] instanceof Date ? Utilities.formatDate(row[1], "GMT", "yyyy-MM-dd") : String(row[1] || '2026-10-03'),
+          amount: amortized,
+          note: 'Abono inicial amortizado',
+          source: 'available_balance'
+        });
+      }
+
       list.push({
-        id: String(row[0] || ('debt-' + i)),
+        id: debtId,
         date: row[1] instanceof Date ? Utilities.formatDate(row[1], "GMT", "yyyy-MM-dd") : String(row[1] || ''),
         userId: rowUserId,
         lender: String(row[3] || 'Entidad'),
@@ -258,7 +291,7 @@ function getUserDebts(ss, userId) {
         currentBalance: remaining,
         status: String(row[9] || (remaining <= 0 ? 'Liquidada' : 'Activa')),
         category: 'Personal',
-        paymentsHistory: []
+        paymentsHistory: debtPayments
       });
     }
   }
@@ -408,9 +441,22 @@ function syncDebtsSheet(ss, userId, debts) {
   var sheet = ss.getSheetByName('Deudas');
   if (!sheet) return;
   var data = sheet.getDataRange().getValues();
-  var numCols = Math.max(sheet.getLastColumn(), 10);
 
-  var header = padRow(['ID Deuda', 'Fecha', 'ID Usuario', 'Acreedor / Entidad', 'Monto Total', 'Cuota Mensual', 'Fecha de Vencimiento', 'Monto Amortizado', 'Saldo Restante', 'Estado'], numCols);
+  var maxAbonos = 1;
+  debts.forEach(function(d) {
+    if (d.paymentsHistory && d.paymentsHistory.length > maxAbonos) {
+      maxAbonos = d.paymentsHistory.length;
+    }
+  });
+
+  var baseHeaders = ['ID Deuda', 'Fecha', 'ID Usuario', 'Acreedor / Entidad', 'Monto Total', 'Cuota Mensual', 'Fecha de Vencimiento', 'Monto Amortizado', 'Saldo Restante', 'Estado', 'Total Abonos', 'Último Abono', 'Fecha Último Abono'];
+  for (var k = 1; k <= maxAbonos; k++) {
+    baseHeaders.push('Abono ' + k);
+    baseHeaders.push('Fecha ' + k);
+  }
+
+  var numCols = Math.max(sheet.getLastColumn(), baseHeaders.length);
+  var header = padRow(baseHeaders, numCols);
   var newRows = [header];
 
   for (var i = 1; i < data.length; i++) {
@@ -425,8 +471,10 @@ function syncDebtsSheet(ss, userId, debts) {
     var end = d.dueDate || start;
     var plazo = calculateMonthsBetween(start, end);
     var cuota = Math.round((d.totalAmount || 0) / plazo);
+    var history = d.paymentsHistory || [];
+    var lastPayment = history.length > 0 ? history[history.length - 1] : null;
 
-    newRows.push(padRow([
+    var row = [
       d.id || ('debt-' + Date.now()),
       start,
       userId,
@@ -436,12 +484,62 @@ function syncDebtsSheet(ss, userId, debts) {
       end,
       amortizado,
       d.currentBalance || 0,
-      d.status || 'Activa'
-    ], numCols));
+      d.status || 'Activa',
+      history.length,
+      lastPayment ? lastPayment.amount : 0,
+      lastPayment ? lastPayment.date : ''
+    ];
+
+    history.forEach(function(p) {
+      row.push(p.amount);
+      row.push(p.date);
+    });
+
+    newRows.push(padRow(row, numCols));
   });
 
   sheet.clearContents();
   sheet.getRange(1, 1, newRows.length, numCols).setValues(newRows);
+
+  // Sincronizar también en la hoja Abonos
+  var abonosSheet = ss.getSheetByName('Abonos');
+  if (!abonosSheet) {
+    abonosSheet = ss.insertSheet('Abonos');
+  }
+
+  var abData = abonosSheet.getDataRange().getValues();
+  var abCols = Math.max(abonosSheet.getLastColumn(), 8);
+  var abHeader = padRow(['ID Abono', 'Fecha', 'Tipo', 'ID Referencia', 'Acreedor / Prestatario', 'Monto Abonado', 'Saldo Restante', 'Notas', 'ID Usuario'], abCols);
+  var newAbRows = [abHeader];
+
+  // Preservar abonos de otros usuarios o que sean de préstamos
+  for (var a = 1; a < abData.length; a++) {
+    var aUser = String(abData[a][8] || abData[a][7] || '').trim();
+    var aType = String(abData[a][2] || '').trim();
+    if (aUser !== userId || aType === 'Préstamo') {
+      newAbRows.push(padRow(abData[a], abCols));
+    }
+  }
+
+  // Insertar todos los abonos de las deudas del usuario
+  debts.forEach(function(d) {
+    (d.paymentsHistory || []).forEach(function(p, idx) {
+      newAbRows.push(padRow([
+        p.id || ('dpay-' + Date.now() + '-' + idx),
+        p.date || new Date().toISOString().split('T')[0],
+        'Deuda',
+        d.id,
+        d.lender || d.title,
+        p.amount,
+        d.currentBalance,
+        p.note || 'Abono a deuda',
+        userId
+      ], abCols));
+    });
+  });
+
+  abonosSheet.clearContents();
+  abonosSheet.getRange(1, 1, newAbRows.length, abCols).setValues(newAbRows);
 }
 
 function calculateMonthsBetween(d1Str, d2Str) {

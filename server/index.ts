@@ -127,7 +127,7 @@ app.get('/api/userData/:userId', (req, res) => {
   const userIncomes = data.ingresos.filter(i => i.userId === userId);
   const userDebts = data.deudas.filter(d => d.userId === userId).map(d => ({
     ...d,
-    paymentsHistory: []
+    paymentsHistory: d.paymentsHistory || []
   }));
   const userLoans = data.prestamos.filter(l => l.userId === userId).map(l => ({
     ...l,
