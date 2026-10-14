@@ -60,7 +60,7 @@ export const DebtHistoryModal: React.FC<DebtHistoryModalProps> = ({
         {/* Content */}
         <div className="p-6 overflow-y-auto space-y-5">
           {/* Info Card */}
-          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4.5">
+          <div className="bg-white rounded-2xl p-1">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-amber-100 text-[#D4A853] flex items-center justify-center font-bold text-lg">
