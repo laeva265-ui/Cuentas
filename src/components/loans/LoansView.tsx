@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
 import { 
   ArrowLeft, HandCoins, Plus, ArrowUpRight, ArrowDownRight, 
-  CheckCircle, MessageCircle, AlertCircle, Quote, Eye, History
+  CheckCircle, MessageCircle, AlertCircle, Quote, Eye, History, ShieldCheck
 } from 'lucide-react';
 import { User, Loan, LoanType } from '../../types';
 import { formatCurrency, formatDate, calculateMonthsBetween } from '../../utils/formatters';
@@ -304,12 +304,18 @@ export function LoansView({
                     )}
                   </>
                 ) : (
-                  <button
-                    onClick={() => onDeleteLoan(loan.id)}
-                    className="w-full py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 hover:text-red-600 transition-colors font-medium text-sm"
-                  >
-                    Eliminar Registro
-                  </button>
+                  <div className="w-full flex items-center justify-between p-3 bg-emerald-50/80 border border-emerald-200 rounded-xl">
+                    <div className="flex items-center gap-2 text-emerald-800 text-xs font-semibold">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      <span>Registro Histórico Protegido</span>
+                    </div>
+                    <button
+                      onClick={() => setSelectedLoanForHistory(loan)}
+                      className="px-3 py-1.5 bg-white hover:bg-emerald-100 text-emerald-700 border border-emerald-300 rounded-lg text-xs font-bold transition-colors shadow-sm"
+                    >
+                      Ver Historial
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

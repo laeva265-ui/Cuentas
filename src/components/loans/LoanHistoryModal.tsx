@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Calendar, DollarSign, User as UserIcon, CheckCircle, ArrowDownLeft, Clock, Plus } from 'lucide-react';
+import { X, Calendar, DollarSign, User as UserIcon, CheckCircle, ArrowDownLeft, Clock, Plus, ShieldCheck } from 'lucide-react';
 import { User, Loan } from '../../types';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 
@@ -194,7 +194,12 @@ export const LoanHistoryModal: React.FC<LoanHistoryModalProps> = ({
           >
             Cerrar
           </button>
-          {!isSaldado && (
+          {isSaldado ? (
+            <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+              <span>Registro Histórico Protegido (No eliminable)</span>
+            </div>
+          ) : (
             <button
               onClick={() => {
                 onClose();

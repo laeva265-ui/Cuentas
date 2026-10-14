@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Calendar, CreditCard, CheckCircle, ArrowDownLeft, Clock, Plus, AlertCircle, Percent } from 'lucide-react';
+import { X, Calendar, CreditCard, CheckCircle, ArrowDownLeft, Clock, Plus, AlertCircle, Percent, ShieldCheck } from 'lucide-react';
 import { User, Debt } from '../../types';
 import { formatCurrency, formatDate, calculateMonthsBetween } from '../../utils/formatters';
 
@@ -206,7 +206,12 @@ export const DebtHistoryModal: React.FC<DebtHistoryModalProps> = ({
           >
             Cerrar
           </button>
-          {!isLiquidated && (
+          {isLiquidated ? (
+            <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+              <span>Registro Histórico Protegido (No eliminable)</span>
+            </div>
+          ) : (
             <button
               onClick={() => {
                 onClose();

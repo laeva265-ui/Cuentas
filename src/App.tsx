@@ -279,6 +279,11 @@ export const App: React.FC = () => {
   };
 
   const handleDeleteDebt = (id: string) => {
+    const target = debts.find((d) => d.id === id);
+    if (target && (target.status === 'Liquidada' || (target.currentBalance || 0) <= 0)) {
+      console.warn('Operación denegada: Las deudas liquidadas quedan archivadas como registro histórico permanente y no se pueden eliminar.');
+      return;
+    }
     const updated = debts.filter((d) => d.id !== id);
     setDebts(updated);
     StorageService.saveDebts(currentUser.id, updated);
@@ -328,6 +333,11 @@ export const App: React.FC = () => {
   };
 
   const handleDeleteLoan = (id: string) => {
+    const target = loans.find((l) => l.id === id);
+    if (target && (target.status === 'Saldado' || (target.remainingAmount || 0) <= 0)) {
+      console.warn('Operación denegada: Los préstamos saldados quedan archivados como registro histórico permanente y no se pueden eliminar.');
+      return;
+    }
     const updated = loans.filter((l) => l.id !== id);
     setLoans(updated);
     StorageService.saveLoans(currentUser.id, updated);
