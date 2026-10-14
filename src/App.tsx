@@ -86,13 +86,29 @@ export const App: React.FC = () => {
     const mergeLoans = (remoteLoans: Loan[]) => {
       return remoteLoans.map(remoteL => {
         const localL = localLoans.find(l => l.id === remoteL.id);
-        const history = (localL && localL.paymentsHistory && localL.paymentsHistory.length > 0)
-          ? localL.paymentsHistory
-          : (remoteL.paymentsHistory || []);
+        const remoteHist = remoteL.paymentsHistory || [];
+        const localHist = localL?.paymentsHistory || [];
+
+        const histMap = new Map<string, any>();
+        remoteHist.forEach(h => histMap.set(h.id, h));
+        localHist.forEach(h => histMap.set(h.id, h));
+
+        const amortized = Math.max(0, (remoteL.originalAmount || 0) - (remoteL.remainingAmount || 0));
+        let finalHistory = Array.from(histMap.values());
+
+        if (finalHistory.length === 0 && amortized > 0) {
+          finalHistory = [{
+            id: `lpay-${remoteL.id}-init`,
+            amount: amortized,
+            date: remoteL.startDate || '2026-10-03',
+            note: 'Abono inicial registrado',
+            source: 'available_balance' as const
+          }];
+        }
 
         return {
           ...remoteL,
-          paymentsHistory: history
+          paymentsHistory: finalHistory
         };
       });
     };

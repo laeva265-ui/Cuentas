@@ -16,7 +16,7 @@ app.get('/api/excel/info', (req, res) => {
   res.json({
     status: 'online',
     filePath: ExcelDB.getFilePath(),
-    sheets: ['Credenciales', 'Gastos', 'Ingresos', 'Deudas', 'Prestamos']
+    sheets: ['Credenciales', 'Gastos', 'Ingresos', 'Deudas', 'Prestamos', 'Abonos']
   });
 });
 
@@ -131,7 +131,7 @@ app.get('/api/userData/:userId', (req, res) => {
   }));
   const userLoans = data.prestamos.filter(l => l.userId === userId).map(l => ({
     ...l,
-    paymentsHistory: []
+    paymentsHistory: l.paymentsHistory || []
   }));
 
   res.json({
