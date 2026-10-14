@@ -189,7 +189,40 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     saveStoredPassword(newUserEmail.trim(), finalPass);
     saveStoredPassword(newUserEmail.split('@')[0].trim(), finalPass);
 
-    // Registrar en Excel
+    // 1. Si Google Apps Script está configurado, registrar directamente en Google Sheets
+    if (GoogleAppsScriptService.isConfigured()) {
+      const gsRes = await GoogleAppsScriptService.registerUser({
+        name: newUserName,
+        email: newUserEmail,
+        currency: newUserCurrency,
+        monthlyBudget: 3000,
+        password: finalPass
+      });
+
+      if (gsRes.success && gsRes.user) {
+        StorageService.setActiveUserId(gsRes.user.id);
+        saveStoredPassword(gsRes.user.id, finalPass);
+        const localUsers = StorageService.getUsers();
+        if (!localUsers.some(u => u.id === gsRes.user!.id)) {
+          StorageService.saveUsers([...localUsers, gsRes.user]);
+        }
+        // También respaldar en el archivo Excel local
+        ExcelApiService.register({
+          name: newUserName,
+          email: newUserEmail,
+          currency: newUserCurrency,
+          monthlyBudget: 3000,
+          password: finalPass
+        }).catch(() => {});
+
+        resetRegisterFields();
+        onUserChanged(gsRes.user);
+        onClose?.();
+        return;
+      }
+    }
+
+    // 2. Registrar en Excel local
     const res = await ExcelApiService.register({
       name: newUserName,
       email: newUserEmail,

@@ -195,6 +195,24 @@ export const App: React.FC = () => {
 
     // 2. Consulta a Google Sheets via Apps Script si está configurado
     if (GoogleAppsScriptService.isConfigured()) {
+      // Sincronizar automáticamente el usuario si no existe en la hoja Usuarios
+      GoogleAppsScriptService.getUsers().then((gsUsers) => {
+        const exists = gsUsers.some(u => 
+          u.id.toLowerCase() === userId.toLowerCase() ||
+          u.name.toLowerCase() === currentUser.name.toLowerCase() ||
+          u.email.toLowerCase() === currentUser.email.toLowerCase()
+        );
+        if (!exists && currentUser.name && currentUser.email) {
+          GoogleAppsScriptService.registerUser({
+            name: currentUser.name,
+            email: currentUser.email,
+            currency: currentUser.currency,
+            monthlyBudget: currentUser.monthlyBudget || 3000,
+            password: '12345'
+          });
+        }
+      }).catch(() => {});
+
       const gsData = await GoogleAppsScriptService.getUserFinancialData(userId);
       if (gsData) {
         if (gsData.expenses) {

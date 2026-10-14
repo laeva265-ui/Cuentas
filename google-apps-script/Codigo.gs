@@ -51,6 +51,11 @@ function handleRequest(e) {
         result = loginUser(ss, username, password);
         break;
 
+      case 'registerUser':
+      case 'register':
+        result = registerUser(ss, postData);
+        break;
+
       case 'getUserData':
         var userId = postData.userId || params.userId;
         result = getUserFinancialData(ss, userId);
@@ -164,6 +169,62 @@ function loginUser(ss, username, password) {
       theme: 'light',
       monthlyBudget: 3500,
       createdAt: found.createdAt
+    }
+  };
+}
+
+function registerUser(ss, userData) {
+  var sheet = ss.getSheetByName('Usuarios');
+  if (!sheet) {
+    sheet = ss.insertSheet('Usuarios');
+  }
+
+  var data = sheet.getDataRange().getValues();
+  var numCols = Math.max(sheet.getLastColumn(), 7);
+
+  var newUserId = userData.id || ('USR-' + Utilities.formatDate(new Date(), "GMT", "yyyyMMdd-HHmmss"));
+  var email = (userData.email || '').trim().toLowerCase();
+  var username = (userData.username || (email.indexOf('@') !== -1 ? email.split('@')[0] : email) || 'usuario').trim();
+  var name = (userData.name || 'Cliente FinFlow').trim();
+  var password = String(userData.password || '12345').trim();
+  var role = (userData.role || 'Cliente').trim();
+  var status = (userData.status || 'Activo').trim();
+  var dateStr = userData.createdAt || Utilities.formatDate(new Date(), "GMT", "yyyy-MM-dd");
+
+  // Verificar si ya existe por ID o por Usuario en la hoja
+  var exists = false;
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() === newUserId || String(data[i][1]).trim().toLowerCase() === username.toLowerCase()) {
+      exists = true;
+      break;
+    }
+  }
+
+  if (!exists) {
+    var newRow = padRow([
+      newUserId,
+      username,
+      name,
+      password,
+      role,
+      status,
+      dateStr
+    ], numCols);
+
+    sheet.appendRow(newRow);
+  }
+
+  return {
+    success: true,
+    user: {
+      id: newUserId,
+      name: name,
+      username: username,
+      email: email,
+      currency: userData.currency || 'USD',
+      theme: 'light',
+      monthlyBudget: 3500,
+      createdAt: dateStr
     }
   };
 }

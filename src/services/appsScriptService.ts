@@ -103,7 +103,62 @@ export const GoogleAppsScriptService = {
     }
   },
 
-  // 3. Obtener datos financieros (Gastos, Ingresos, Deudas, Préstamos) del usuario logueado
+  // 3. Registrar nuevo usuario en la hoja "Usuarios" de Google Sheets
+  registerUser: async (userData: {
+    name: string;
+    email: string;
+    currency: string;
+    monthlyBudget: number;
+    password?: string;
+  }): Promise<{ success: boolean; user?: User; error?: string }> => {
+    const url = GoogleAppsScriptService.getScriptUrl();
+    if (!url) return { success: false, error: 'Apps Script no configurado' };
+
+    try {
+      const email = userData.email.trim().toLowerCase();
+      const username = email.includes('@') ? email.split('@')[0] : email;
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'registerUser',
+          name: userData.name.trim(),
+          email: email,
+          username: username.trim(),
+          password: userData.password || '12345',
+          currency: userData.currency || 'USD',
+          monthlyBudget: userData.monthlyBudget || 3000,
+          role: 'Cliente',
+          status: 'Activo',
+          createdAt: new Date().toISOString().split('T')[0]
+        })
+      });
+
+      const data = await res.json();
+      if (data.success && data.user) {
+        return {
+          success: true,
+          user: {
+            id: data.user.id,
+            name: data.user.name,
+            email: data.user.email,
+            avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+            currency: (userData.currency as any) || 'USD',
+            theme: 'light',
+            monthlyBudget: Number(userData.monthlyBudget) || 3000,
+            createdAt: data.user.createdAt
+          }
+        };
+      }
+      return { success: false, error: data.error || 'No se pudo registrar en Google Sheets' };
+    } catch (err: any) {
+      console.warn('[AppsScript] Error al registrar usuario:', err);
+      return { success: false, error: err.message || 'Error de conexión con Google Sheets' };
+    }
+  },
+
+  // 4. Obtener datos financieros (Gastos, Ingresos, Deudas, Préstamos) del usuario logueado
   getUserFinancialData: async (userId: string): Promise<{
     expenses: Expense[];
     incomes: Income[];
