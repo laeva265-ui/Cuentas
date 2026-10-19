@@ -1,32 +1,31 @@
-# React + TypeScript + Vite
+# Cuentas · FinFlow Bank
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Aplicación web progresiva (PWA) de finanzas personales y gestión bancaria digital moderna.
 
-Currently, two official plugins are available:
+## 🚀 Características Principales
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Gestión Integral de Finanzas**: Control de Gastos, Ingresos, Préstamos y Deudas.
+- **Sincronización Dual**: Soporte para base de datos local Excel (`FinFlow Bank.xlsx`) y en la nube vía Google Sheets (Google Apps Script).
+- **Seguridad Bancaria**:
+  - Autenticación con usuario y contraseña.
+  - Cierre automático de sesión tras 1 minuto de inactividad.
+- **Soporte PWA Completo**: Instalable en dispositivos móviles (Android/iOS) y computadores con soporte offline y diseño 100% responsivo.
+- **Conversión de Divisas en Tiempo Real**: Soporte multimoneda (USD, EUR, COP, MXN, CLP, ARS, PEN) con tasas en vivo.
 
-## React Compiler
+## 🛠️ Tecnologías
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS, Lucide Icons, Recharts, Canvas Confetti.
+- **Backend**: Node.js, Express, tsx, XLSX.
 
-## Expanding the Oxlint configuration
+## 📦 Instalación y Ejecución
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+```bash
+# Instalar dependencias
+npm install
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+# Iniciar servidor backend
+npm run server
+
+# Iniciar servidor de desarrollo frontend
+npm run dev
 ```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
