@@ -4,11 +4,14 @@
 
 @layer base {
   body {
-    background-color: #F0F4F8;
+    background-color: var(--app-bg, #F1F5F9);
+    background-image: var(--app-bg-gradient, linear-gradient(180deg, #EDF2F7 0%, #F1F5F9 50%, #E8EEF5 100%));
     color: #1E293B;
     font-family: 'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 16px;
     line-height: 1.6;
+    min-height: 100vh;
+    transition: background-color 0.35s ease, background-image 0.35s ease;
   }
 }
 
@@ -33,6 +36,11 @@
   --brand-accent-light: rgba(212, 168, 83, 0.15);
   --brand-highlight: #1A56DB;
   --brand-glow: rgba(26, 86, 219, 0.15);
+  --app-bg: #F1F5F9;
+  --app-bg-gradient: linear-gradient(180deg, #EBF1F7 0%, #F1F5F9 45%, #E5EDF5 100%);
+  --app-pattern-start: rgba(26, 86, 219, 0.05);
+  --app-pattern-end: rgba(11, 26, 46, 0.04);
+  --card-border: #E2E8F0;
 }
 
 [data-theme="emerald"] {
@@ -47,6 +55,11 @@
   --brand-accent-light: rgba(52, 211, 153, 0.15);
   --brand-highlight: #059669;
   --brand-glow: rgba(5, 150, 105, 0.15);
+  --app-bg: #EFF6F2;
+  --app-bg-gradient: linear-gradient(180deg, #E6F3EC 0%, #EFF6F2 45%, #DFEFE6 100%);
+  --app-pattern-start: rgba(5, 150, 105, 0.07);
+  --app-pattern-end: rgba(6, 78, 59, 0.04);
+  --card-border: #D1E7DD;
 }
 
 [data-theme="burgundy"] {
@@ -61,6 +74,11 @@
   --brand-accent-light: rgba(253, 164, 175, 0.15);
   --brand-highlight: #E11D48;
   --brand-glow: rgba(225, 29, 72, 0.15);
+  --app-bg: #FAF2F4;
+  --app-bg-gradient: linear-gradient(180deg, #F8EDF0 0%, #FAF2F4 45%, #F3E5E9 100%);
+  --app-pattern-start: rgba(225, 29, 72, 0.06);
+  --app-pattern-end: rgba(76, 5, 25, 0.04);
+  --card-border: #F7D6DE;
 }
 
 [data-theme="gold"] {
@@ -75,6 +93,11 @@
   --brand-accent-light: rgba(253, 224, 71, 0.15);
   --brand-highlight: #D97706;
   --brand-glow: rgba(217, 119, 6, 0.15);
+  --app-bg: #FAF7EE;
+  --app-bg-gradient: linear-gradient(180deg, #F6F1E3 0%, #FAF7EE 45%, #F1EADC 100%);
+  --app-pattern-start: rgba(217, 119, 6, 0.07);
+  --app-pattern-end: rgba(41, 30, 3, 0.04);
+  --card-border: #EFE6CF;
 }
 
 [data-theme="purple"] {
@@ -89,6 +112,11 @@
   --brand-accent-light: rgba(216, 180, 254, 0.15);
   --brand-highlight: #7C3AED;
   --brand-glow: rgba(124, 58, 237, 0.15);
+  --app-bg: #F5F2F9;
+  --app-bg-gradient: linear-gradient(180deg, #EFEAF7 0%, #F5F2F9 45%, #E9E2F4 100%);
+  --app-pattern-start: rgba(124, 58, 237, 0.06);
+  --app-pattern-end: rgba(46, 16, 101, 0.04);
+  --card-border: #E4DCF5;
 }
 
 [data-theme="slate"] {
@@ -103,6 +131,11 @@
   --brand-accent-light: rgba(203, 213, 225, 0.15);
   --brand-highlight: #475569;
   --brand-glow: rgba(71, 85, 105, 0.15);
+  --app-bg: #F1F3F5;
+  --app-bg-gradient: linear-gradient(180deg, #EAEFF2 0%, #F1F3F5 45%, #E2E7EB 100%);
+  --app-pattern-start: rgba(71, 85, 105, 0.06);
+  --app-pattern-end: rgba(15, 23, 42, 0.04);
+  --card-border: #DFE3E8;
 }
 
 [data-theme="ocean"] {
@@ -117,6 +150,18 @@
   --brand-accent-light: rgba(125, 211, 252, 0.15);
   --brand-highlight: #0284C7;
   --brand-glow: rgba(2, 132, 199, 0.15);
+  --app-bg: #EFF6FA;
+  --app-bg-gradient: linear-gradient(180deg, #E4F1F7 0%, #EFF6FA 45%, #DCEDF5 100%);
+  --app-pattern-start: rgba(2, 132, 199, 0.07);
+  --app-pattern-end: rgba(8, 47, 73, 0.04);
+  --card-border: #D0E7F5;
+}
+
+/* Dynamic App Background Utility */
+.theme-app-bg {
+  background-color: var(--app-bg) !important;
+  background-image: var(--app-bg-gradient) !important;
+  transition: background-color 0.35s ease, background-image 0.35s ease;
 }
 
 /* ============================================================
@@ -124,15 +169,16 @@
    ============================================================ */
 .bank-card {
   background: #FFFFFF;
-  border: 1px solid #E2E8F0;
+  border: 1px solid var(--card-border, #E2E8F0);
   border-radius: 1rem;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+  transition: border-color 0.35s ease;
 }
 .bank-card-hover {
   transition: all 0.25s ease;
 }
 .bank-card-hover:hover {
-  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.1), 0 2px 8px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.09), 0 2px 8px rgba(15, 23, 42, 0.05);
   transform: translateY(-2px);
 }
 
@@ -221,8 +267,10 @@
   pointer-events: none;
   z-index: 0;
   background-image: 
-    radial-gradient(ellipse at 10% 0%, rgba(26, 86, 219, 0.04) 0%, transparent 50%),
-    radial-gradient(ellipse at 90% 100%, rgba(15, 39, 68, 0.03) 0%, transparent 50%);
+    radial-gradient(ellipse at 12% 0%, var(--app-pattern-start) 0%, transparent 55%),
+    radial-gradient(ellipse at 88% 100%, var(--app-pattern-end) 0%, transparent 55%),
+    radial-gradient(circle at 50% 30%, var(--app-pattern-start) 0%, transparent 60%);
+  transition: background-image 0.4s ease;
 }
 
 /* Animate */

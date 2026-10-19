@@ -124,10 +124,10 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="bg-[#0B1A2E] px-6 py-4 flex items-center justify-between text-white">
+        <div className="bank-header-gradient px-6 py-4 flex items-center justify-between text-white">
           <div className="flex items-center gap-3">
             <div className="bg-white/10 p-2 rounded-lg">
-              <Plus className="w-5 h-5 text-blue-300" />
+              <Plus className="w-5 h-5 gold-accent" />
             </div>
             <h2 className="text-xl font-semibold">Nueva Operación Bancaria</h2>
           </div>
@@ -373,7 +373,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-xl font-medium text-white bg-[#0B1A2E] hover:bg-[#122B4A] transition-colors"
+                className="px-6 py-2.5 rounded-xl font-medium text-white bank-header-gradient hover:opacity-95 transition-opacity shadow-md"
               >
                 Confirmar Operación
               </button>

@@ -193,7 +193,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#F0F4F8] p-4 md:p-6 pb-28">
+    <div className="min-h-screen theme-app-bg p-4 md:p-6 pb-28">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Navigation */}
         <button 
@@ -228,7 +228,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
               <div>
                 <h2 className="text-lg sm:text-xl font-bold text-slate-800">Colores y Temas de la App</h2>
-                <p className="text-xs text-slate-500">Selecciona el estilo visual que deseas para toda la banca digital</p>
+                <p className="text-xs text-slate-500">Selecciona el estilo visual: cambia los encabezados, tarjetas y el fondo completo de la app</p>
               </div>
             </div>
             <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
@@ -245,7 +245,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   onClick={() => handleSelectTheme(theme.id)}
                   className={`relative p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
                     isSelected
-                      ? 'border-[#1A56DB] bg-blue-50/40 shadow-md ring-2 ring-blue-500/20'
+                      ? 'border-[#1A56DB] bg-blue-50/50 shadow-md ring-2 ring-blue-500/20'
                       : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
                   }`}
                 >
@@ -267,7 +267,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
                   {/* Gradient Preview Bar */}
                   <div 
-                    className="h-9 rounded-lg mb-2.5 flex items-center justify-between px-3 text-white font-medium shadow-inner"
+                    className="h-9 rounded-lg mb-2 flex items-center justify-between px-3 text-white font-medium shadow-inner"
                     style={{
                       background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 60%, ${theme.accentColor} 140%)`
                     }}
@@ -280,7 +280,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </div>
 
                   {/* Name and subtitle */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-2">
                     <div>
                       <h4 className="font-bold text-xs sm:text-sm text-slate-900 leading-tight">
                         {theme.name}
@@ -294,6 +294,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         <Check className="w-3.5 h-3.5 stroke-[3]" />
                       </div>
                     )}
+                  </div>
+
+                  {/* Background tone swatch & info */}
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
+                    <span className="text-slate-400 font-medium">Fondo:</span>
+                    <span className="font-semibold text-slate-600 flex items-center gap-1.5">
+                      <span 
+                        className="w-3 h-3 rounded-full border border-slate-300 shadow-sm inline-block" 
+                        style={{ backgroundColor: theme.appBgColor }} 
+                      />
+                      {theme.appBgName}
+                    </span>
                   </div>
                 </div>
               );

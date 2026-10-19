@@ -52,7 +52,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           className="flex flex-col items-center justify-center -mt-5 group"
           title="Nueva Operación"
         >
-          <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#0B1A2E] to-[#1A3A5C] text-[#D4A853] p-3 shadow-lg flex items-center justify-center border-2 border-white group-active:scale-95 transition-transform">
+          <div className="w-12 h-12 rounded-full bank-header-gradient gold-accent p-3 shadow-lg flex items-center justify-center border-2 border-white group-active:scale-95 transition-transform">
             <Plus className="w-6 h-6 stroke-[2.5]" />
           </div>
           <span className="text-[9px] font-bold text-slate-700 mt-0.5">Nuevo</span>

@@ -250,7 +250,7 @@ export function DashboardOverview({
       <div className="bank-card bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-[#E2E8F0]">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2">
           <h2 className="text-base sm:text-lg font-bold text-[#0B1A2E]">Flujo de Caja</h2>
-          <select className="bg-[#F0F4F8] border-none text-xs sm:text-sm font-semibold text-[#0B1A2E] rounded-lg px-3 py-1.5 outline-none">
+          <select className="bg-slate-100 border-none text-xs sm:text-sm font-semibold text-slate-800 rounded-lg px-3 py-1.5 outline-none">
             <option>Últimos 6 meses</option>
             <option>Este año</option>
           </select>
@@ -342,7 +342,7 @@ export function DashboardOverview({
           
           <button onClick={() => onNavigate('advisor')} className="bank-card-hover bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm text-left flex items-start justify-between group hover:border-[#D4A853]/30 hover:shadow-md transition-all">
             <div className="flex gap-4">
-              <div className="h-10 w-10 rounded-lg bg-[#F0F4F8] text-[#1A3A5C] flex items-center justify-center shrink-0">
+              <div className="h-10 w-10 rounded-lg bg-slate-100 text-[#1A3A5C] flex items-center justify-center shrink-0">
                 <PieChart className="h-5 w-5" />
               </div>
               <div>

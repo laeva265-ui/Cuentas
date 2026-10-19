@@ -13,6 +13,7 @@ interface DebtsViewProps {
   debts: Debt[];
   onAddDebt: () => void;
   onOpenPaymentModal: (debt: Debt) => void;
+  onOpenIncreaseModal?: (debt: Debt) => void;
   onLiquidateDebt: (debtId: string) => void;
   onDeleteDebt: (debtId: string) => void;
   onBackToDashboard: () => void;
@@ -23,6 +24,7 @@ export function DebtsView({
   debts,
   onAddDebt,
   onOpenPaymentModal,
+  onOpenIncreaseModal,
   onLiquidateDebt,
   onDeleteDebt,
   onBackToDashboard
@@ -99,10 +101,10 @@ export function DebtsView({
           </div>
           <button 
             onClick={onAddDebt}
-            className="w-full sm:w-auto justify-center flex items-center gap-2 px-5 py-2.5 sm:py-3 bg-[#0B1A2E] text-white rounded-xl hover:bg-[#122B4A] transition-colors shadow-sm font-semibold text-xs sm:text-sm"
+            className="w-full sm:w-auto justify-center flex items-center gap-2 px-5 py-2.5 sm:py-3 bank-header-gradient text-white rounded-xl hover:opacity-95 transition-opacity shadow-sm font-bold text-xs sm:text-sm"
           >
-            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-            Registrar Pasivo
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5 gold-accent" />
+            Registrar Nueva Deuda
           </button>
         </div>
       </div>
@@ -169,10 +171,14 @@ export function DebtsView({
       {/* Debt Cards Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {displayDebts.map((debt, index) => {
-          const totalAmortizado = Math.max(0, debt.totalAmount - debt.currentBalance);
+          const isIncrease = (p: any) => p.type === 'monto_deuda' || String(p.id).startsWith('inc-') || (p.note && (p.note.toLowerCase().includes('adicional') || p.note.toLowerCase().includes('aumento') || p.note.toLowerCase().includes('monto')));
+          const numAbonos = debt.paymentsHistory?.filter(p => !isIncrease(p)).length || 0;
+          const numAumentos = debt.paymentsHistory?.filter(p => isIncrease(p)).length || 0;
+          const totalAmortizado = debt.paymentsHistory && debt.paymentsHistory.length > 0
+            ? debt.paymentsHistory.filter(p => !isIncrease(p)).reduce((sum, p) => sum + (p.amount || 0), 0)
+            : Math.max(0, debt.totalAmount - debt.currentBalance);
           const progress = debt.totalAmount > 0 ? (totalAmortizado / debt.totalAmount) * 100 : 0;
           const isLiquidated = debt.status === 'Liquidada' || debt.currentBalance <= 0;
-          const numAbonos = debt.paymentsHistory?.length || 0;
           
           return (
             <div 
@@ -204,10 +210,13 @@ export function DebtsView({
                       setSelectedDebtForHistory(debt);
                     }}
                     className="text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-colors border border-amber-200/60"
-                    title="Ver historial de abonos"
+                    title="Ver historial de movimientos"
                   >
                     <History className="w-3.5 h-3.5" />
-                    <span>{numAbonos} Abono{numAbonos !== 1 ? 's' : ''}</span>
+                    <span>
+                      {numAbonos} Abono{numAbonos !== 1 ? 's' : ''}
+                      {numAumentos > 0 ? ` · +${numAumentos} Monto` : ''}
+                    </span>
                   </button>
 
                   <span className="text-xs font-bold px-2 py-1 bg-amber-50 text-amber-700 rounded border border-amber-200">
@@ -270,15 +279,25 @@ export function DebtsView({
                   <>
                     <button
                       onClick={() => onOpenPaymentModal(debt)}
-                      className="flex-1 py-2.5 bg-[#0B1A2E] text-white rounded-xl hover:bg-[#122B4A] transition-colors font-medium text-sm flex justify-center items-center gap-2 shadow-sm"
+                      className="flex-1 py-2.5 bg-[#0B1A2E] text-white rounded-xl hover:bg-[#122B4A] transition-colors font-medium text-xs sm:text-sm flex justify-center items-center gap-1.5 shadow-sm"
                     >
-                      Abonar <ArrowRight className="w-4 h-4 text-[#D4A853]" />
+                      Abonar <ArrowRight className="w-3.5 h-3.5 text-[#D4A853]" />
                     </button>
+                    {onOpenIncreaseModal && (
+                      <button
+                        onClick={() => onOpenIncreaseModal(debt)}
+                        className="px-3 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/80 rounded-xl font-bold text-xs flex items-center justify-center gap-1 transition-colors shadow-sm"
+                        title="Ingresar más monto a esta deuda (no es abono)"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-amber-600" />
+                        <span>+ Monto</span>
+                      </button>
+                    )}
                     <button
                       onClick={() => handleLiquidate(debt.id)}
-                      className="flex-1 py-2.5 bg-emerald-50 text-emerald-700 rounded-xl hover:bg-emerald-100 transition-colors font-medium text-sm flex justify-center items-center"
+                      className="px-3.5 py-2.5 bg-emerald-50 text-emerald-700 rounded-xl hover:bg-emerald-100 transition-colors font-medium text-xs sm:text-sm flex justify-center items-center"
                     >
-                      Liquidar Total
+                      Liquidar
                     </button>
                   </>
                 ) : (
@@ -300,8 +319,15 @@ export function DebtsView({
           );
         })}
         {displayDebts.length === 0 && (
-          <div className="col-span-1 lg:col-span-2 py-12 text-center bank-card bg-slate-50 rounded-2xl border border-slate-200 border-dashed">
+          <div className="col-span-1 lg:col-span-2 py-12 text-center bank-card bg-slate-50/80 rounded-2xl border border-slate-200 border-dashed">
             <p className="text-slate-500 font-medium">No se han registrado pasivos en el sistema.</p>
+            <button
+              onClick={onAddDebt}
+              className="mt-3 px-4 py-2 bank-header-gradient text-white rounded-xl font-bold text-xs shadow inline-flex items-center gap-1.5 hover:opacity-95"
+            >
+              <Plus className="w-4 h-4 gold-accent" />
+              <span>Registrar Nueva Deuda</span>
+            </button>
           </div>
         )}
       </div>
@@ -316,6 +342,10 @@ export function DebtsView({
           setSelectedDebtForHistory(null);
           onOpenPaymentModal(debt);
         }}
+        onOpenIncreaseModal={onOpenIncreaseModal ? (debt) => {
+          setSelectedDebtForHistory(null);
+          onOpenIncreaseModal(debt);
+        } : undefined}
       />
     </div>
   );

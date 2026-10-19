@@ -87,10 +87,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="bg-[#0B1A2E] px-6 py-4 flex items-center justify-between text-white">
+        <div className="bank-header-gradient px-6 py-4 flex items-center justify-between text-white">
           <div className="flex items-center gap-3">
             <div className="bg-white/10 p-2 rounded-lg">
-              <DollarSign className="w-5 h-5 text-[#E8C374]" />
+              <DollarSign className="w-5 h-5 gold-accent" />
             </div>
             <h2 className="text-xl font-semibold">{title}</h2>
           </div>
@@ -101,7 +101,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         <div className="p-6 overflow-y-auto">
           {/* Summary Card */}
-          <div className="bg-[#F0F4F8] rounded-xl p-4 mb-5 border border-slate-200 flex items-center gap-4">
+          <div className="bg-slate-50 rounded-xl p-4 mb-5 border border-slate-200 flex items-center gap-4">
             <div className="bg-white p-3 rounded-xl shadow-sm">
               <Wallet className="w-6 h-6 text-[#1A56DB]" />
             </div>

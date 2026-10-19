@@ -139,14 +139,14 @@ export const ExcelDB = {
     };
 
     const rawAbonos = getSheetData<any>('Abonos').map((row: any) => ({
-      id: String(row['ID Abono'] || row['id'] || `abn-${Date.now()}`),
+      id: String(row['ID Movimiento'] || row['ID Abono'] || row['id'] || `abn-${Date.now()}`),
       date: String(row['Fecha'] || row['date'] || new Date().toISOString().split('T')[0]),
       referenceId: String(row['ID Referencia'] || row['ID Préstamo'] || row['ID Deuda'] || row['referenceId'] || row['loanId'] || row['debtId'] || ''),
-      type: (row['Tipo'] || (row['ID Deuda'] ? 'Deuda' : 'Préstamo')) as 'Préstamo' | 'Deuda',
+      type: String(row['Tipo'] || row['Concepto Operación'] || (row['ID Deuda'] ? 'Deuda' : 'Préstamo')),
       concept: String(row['Acreedor / Prestatario'] || row['Prestatario'] || row['Concepto'] || row['Acreedor'] || row['personName'] || ''),
-      amount: Number(row['Monto Abonado'] || row['amount'] || 0),
+      amount: Number(row['Monto'] || row['Monto Abonado'] || row['amount'] || 0),
       remainingAmount: Number(row['Saldo Restante'] !== undefined ? row['Saldo Restante'] : row['remainingAmount'] || 0),
-      note: String(row['Notas'] || row['note'] || 'Abono registrado'),
+      note: String(row['Notas'] || row['note'] || 'Movimiento registrado'),
       userId: String(row['ID Usuario'] || row['userId'] || 'USR-001')
     }));
 
@@ -156,16 +156,21 @@ export const ExcelDB = {
       const remainingAmount = Number(row['Saldo Pendiente'] !== undefined ? row['Saldo Pendiente'] : row['remainingAmount'] || 0);
       const amortized = Math.max(0, originalAmount - remainingAmount);
 
-      // Buscar abonos de este préstamo en la hoja Abonos
+      // Buscar abonos y aumentos de este préstamo en la hoja Abonos
       let loanPayments = rawAbonos
-        .filter(a => a.referenceId === loanId || (a.type === 'Préstamo' && a.concept === row['Prestatario']))
-        .map(a => ({
-          id: a.id,
-          amount: a.amount,
-          date: a.date,
-          note: a.note || 'Cobro recibido',
-          source: 'available_balance' as const
-        }));
+        .filter(a => a.referenceId === loanId || ((a.type.includes('Préstamo') || a.type === 'Préstamo') && a.concept === row['Prestatario']))
+        .map(a => {
+          const isInc = a.type.includes('Aumento') || a.id.startsWith('linc-') || (a.note && (a.note.toLowerCase().includes('adicional') || a.note.toLowerCase().includes('aumento')));
+          return {
+            id: a.id,
+            amount: a.amount,
+            date: a.date,
+            note: a.note || (isInc ? 'Monto adicional ingresado al préstamo' : 'Cobro recibido'),
+            source: 'available_balance' as const,
+            type: isInc ? ('monto_deuda' as const) : ('abono' as const),
+            balanceAfter: a.remainingAmount
+          };
+        });
 
       // Si no hay en la hoja Abonos pero la fila del préstamo tiene columnas Abono 1, Abono 2, etc.
       if (loanPayments.length === 0) {
@@ -217,16 +222,21 @@ export const ExcelDB = {
       const amortized = Math.max(0, totalAmount - currentBalance);
       const lenderName = String(row['Acreedor / Entidad'] || row['lender'] || 'Entidad');
 
-      // Buscar abonos de esta deuda en la hoja Abonos
+      // Buscar abonos y aumentos de esta deuda en la hoja Abonos
       let debtPayments = rawAbonos
-        .filter(a => a.referenceId === debtId || (a.type === 'Deuda' && a.concept === lenderName))
-        .map(a => ({
-          id: a.id,
-          amount: a.amount,
-          date: a.date,
-          note: a.note || 'Abono a deuda',
-          source: 'available_balance' as const
-        }));
+        .filter(a => a.referenceId === debtId || ((a.type.includes('Deuda') || a.type === 'Deuda') && a.concept === lenderName))
+        .map(a => {
+          const isInc = a.type.includes('Aumento') || a.id.startsWith('inc-') || (a.note && (a.note.toLowerCase().includes('adicional') || a.note.toLowerCase().includes('aumento') || a.note.toLowerCase().includes('monto')));
+          return {
+            id: a.id,
+            amount: a.amount,
+            date: a.date,
+            note: a.note || (isInc ? 'Monto adicional ingresado a la deuda' : 'Abono a deuda'),
+            source: 'available_balance' as const,
+            type: isInc ? ('monto_deuda' as const) : ('abono' as const),
+            balanceAfter: a.remainingAmount
+          };
+        });
 
       // Si no hay en la hoja Abonos pero la fila de la deuda tiene columnas Abono 1, Abono 2, etc.
       if (debtPayments.length === 0) {
@@ -386,56 +396,61 @@ export const ExcelDB = {
     const deudasSource = data.deudas || current.deudas;
     const prestamosSource = data.prestamos || current.prestamos;
 
-    // 1. Extraer abonos embebidos en las deudas
+    // 1. Extraer abonos y aumentos embebidos en las deudas
     deudasSource.forEach(d => {
       if (d.paymentsHistory && Array.isArray(d.paymentsHistory)) {
         d.paymentsHistory.forEach((p: any, idx: number) => {
           const abonoId = p.id || `dpay-${d.id}-${idx + 1}`;
+          const isInc = p.type === 'monto_deuda' || String(p.id).startsWith('inc-') || (p.note && (p.note.toLowerCase().includes('adicional') || p.note.toLowerCase().includes('aumento') || p.note.toLowerCase().includes('monto')));
           abonosMap.set(abonoId, {
             id: abonoId,
             date: p.date || new Date().toISOString().split('T')[0],
             referenceId: d.id,
-            type: 'Deuda',
+            type: isInc ? 'Aumento Deuda' : 'Deuda',
+            movementType: isInc ? 'Aumento de Deuda' : 'Abono',
             concept: d.lender || d.title,
             amount: p.amount,
-            remainingAmount: d.currentBalance,
-            note: p.note || `Abono a deuda #${idx + 1}`,
+            remainingAmount: p.balanceAfter !== undefined ? p.balanceAfter : d.currentBalance,
+            note: p.note || (isInc ? 'Monto adicional ingresado a la deuda' : `Abono a deuda #${idx + 1}`),
             userId: d.userId || 'USR-001'
           });
         });
       }
     });
 
-    // 2. Extraer abonos embebidos en los préstamos
+    // 2. Extraer abonos y aumentos embebidos en los préstamos
     prestamosSource.forEach(l => {
       if (l.paymentsHistory && Array.isArray(l.paymentsHistory)) {
         l.paymentsHistory.forEach((p: any, idx: number) => {
           const abonoId = p.id || `lpay-${l.id}-${idx + 1}`;
+          const isInc = p.type === 'monto_deuda' || String(p.id).startsWith('linc-') || (p.note && (p.note.toLowerCase().includes('adicional') || p.note.toLowerCase().includes('aumento') || p.note.toLowerCase().includes('monto')));
           abonosMap.set(abonoId, {
             id: abonoId,
             date: p.date || new Date().toISOString().split('T')[0],
             referenceId: l.id,
-            type: 'Préstamo',
+            type: isInc ? 'Aumento Préstamo' : 'Préstamo',
+            movementType: isInc ? 'Aumento de Préstamo' : 'Abono',
             concept: l.personName,
             amount: p.amount,
-            remainingAmount: l.remainingAmount,
-            note: p.note || `Abono a préstamo #${idx + 1}`,
+            remainingAmount: p.balanceAfter !== undefined ? p.balanceAfter : l.remainingAmount,
+            note: p.note || (isInc ? 'Monto adicional ingresado al préstamo' : `Abono a préstamo #${idx + 1}`),
             userId: l.userId || 'USR-001'
           });
         });
       }
     });
 
-    // Construir hoja general "Abonos"
+    // Construir hoja general "Abonos" (Registro Histórico Permanente)
     const abonosToSave = Array.from(abonosMap.values()).map(a => ({
-      'ID Abono': a.id,
+      'ID Movimiento': a.id,
       'Fecha': a.date,
-      'Tipo': a.type || 'Préstamo',
+      'Tipo de Operación': a.movementType || (a.type?.includes('Aumento') ? 'Aumento' : 'Abono'),
+      'Categoría': a.type || 'Deuda',
       'ID Referencia': a.referenceId || a.loanId || a.debtId || '',
       'Acreedor / Prestatario': a.concept || a.personName || 'Concepto',
-      'Monto Abonado': a.amount,
+      'Monto': a.amount,
       'Saldo Restante': a.remainingAmount,
-      'Notas': a.note || 'Abono registrado',
+      'Notas': a.note || 'Movimiento registrado',
       'ID Usuario': a.userId
     }));
 

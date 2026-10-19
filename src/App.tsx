@@ -28,6 +28,7 @@ import { FinancialAIAssistant } from './components/ai/FinancialAIAssistant';
 import { SettingsView } from './components/settings/SettingsView';
 import { TransactionModal } from './components/modals/TransactionModal';
 import { PaymentModal } from './components/modals/PaymentModal';
+import { IncreaseAmountModal } from './components/modals/IncreaseAmountModal';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { PwaInstallPrompt } from './components/pwa/PwaInstallPrompt';
 
@@ -113,6 +114,11 @@ export const App: React.FC = () => {
   }, [isAuthenticated, recordActivity]);
 
   const [paymentModalData, setPaymentModalData] = useState<{
+    item: Debt | Loan | null;
+    type: 'debt' | 'loan';
+  }>({ item: null, type: 'debt' });
+
+  const [increaseModalData, setIncreaseModalData] = useState<{
     item: Debt | Loan | null;
     type: 'debt' | 'loan';
   }>({ item: null, type: 'debt' });
@@ -399,11 +405,13 @@ export const App: React.FC = () => {
           paymentsHistory: [
             ...(d.paymentsHistory || []),
             {
-              id: `pay-${Date.now()}`,
+              id: `pay-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
               amount: d.currentBalance,
               date: new Date().toISOString().split('T')[0],
               note: 'Liquidación Total desde Saldo Disponible',
               source: 'available_balance' as const,
+              type: 'abono' as const,
+              balanceAfter: 0,
             },
           ],
         };
@@ -455,11 +463,13 @@ export const App: React.FC = () => {
           paymentsHistory: [
             ...(l.paymentsHistory || []),
             {
-              id: `lpay-${Date.now()}`,
+              id: `lpay-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
               amount: l.remainingAmount,
               date: new Date().toISOString().split('T')[0],
               note: isBorrowed ? 'Saldado Totalmente desde Saldo Disponible' : 'Cobro Totalmente Recuperado',
               source: isBorrowed ? ('available_balance' as const) : undefined,
+              type: 'abono' as const,
+              balanceAfter: 0,
             },
           ],
         };
@@ -487,11 +497,13 @@ export const App: React.FC = () => {
             paymentsHistory: [
               ...(d.paymentsHistory || []),
               {
-                id: `pay-${Date.now()}`,
+                id: `pay-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
                 amount,
                 date: today,
                 note: note || (source === 'available_balance' ? 'Abono desde Saldo Disponible' : 'Abono externo / efectivo'),
                 source,
+                type: 'abono' as const,
+                balanceAfter: newBal,
               },
             ],
           };
@@ -513,11 +525,77 @@ export const App: React.FC = () => {
             paymentsHistory: [
               ...(l.paymentsHistory || []),
               {
-                id: `lpay-${Date.now()}`,
+                id: `lpay-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
                 amount,
                 date: today,
                 note: note || (l.type === 'lent' ? 'Cobro recibido' : (source === 'available_balance' ? 'Pago desde Saldo Disponible' : 'Pago externo / efectivo')),
                 source: l.type === 'borrowed' ? source : undefined,
+                type: 'abono' as const,
+                balanceAfter: newBal,
+              },
+            ],
+          };
+        }
+        return l;
+      });
+      setLoans(updated);
+      StorageService.saveLoans(currentUser.id, updated);
+      ExcelApiService.syncLoans(currentUser.id, updated);
+      GoogleAppsScriptService.syncLoans(currentUser.id, updated);
+    }
+  };
+
+  const handleIncreaseAmountSubmit = (itemId: string, amount: number, note?: string) => {
+    const today = new Date().toISOString().split('T')[0];
+
+    if (increaseModalData.type === 'debt') {
+      const updated = debts.map((d) => {
+        if (d.id === itemId) {
+          const newBalance = d.currentBalance + amount;
+          const newTotal = (d.totalAmount || d.currentBalance) + amount;
+          return {
+            ...d,
+            currentBalance: newBalance,
+            totalAmount: newTotal,
+            status: 'Activa' as const,
+            paymentsHistory: [
+              ...(d.paymentsHistory || []),
+              {
+                id: `inc-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+                amount: amount,
+                date: today,
+                note: note || 'Monto adicional ingresado a la deuda',
+                type: 'monto_deuda' as const,
+                balanceAfter: newBalance,
+              },
+            ],
+          };
+        }
+        return d;
+      });
+      setDebts(updated);
+      StorageService.saveDebts(currentUser.id, updated);
+      ExcelApiService.syncDebts(currentUser.id, updated);
+      GoogleAppsScriptService.syncDebts(currentUser.id, updated);
+    } else {
+      const updated = loans.map((l) => {
+        if (l.id === itemId) {
+          const newRemaining = l.remainingAmount + amount;
+          const newOriginal = l.originalAmount + amount;
+          return {
+            ...l,
+            remainingAmount: newRemaining,
+            originalAmount: newOriginal,
+            status: 'Al día' as const,
+            paymentsHistory: [
+              ...(l.paymentsHistory || []),
+              {
+                id: `linc-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+                amount: amount,
+                date: today,
+                note: note || 'Monto adicional ingresado al préstamo',
+                type: 'monto_deuda' as const,
+                balanceAfter: newRemaining,
               },
             ],
           };
@@ -537,7 +615,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative text-slate-900 bg-[#F0F4F8] selection:bg-blue-100 selection:text-blue-900">
+    <div className="min-h-screen flex flex-col relative text-slate-900 theme-app-bg selection:bg-blue-100 selection:text-blue-900">
       {/* Banking subtle background pattern */}
       <div className="bank-bg-pattern" />
 
@@ -600,6 +678,7 @@ export const App: React.FC = () => {
               debts={debts}
               onAddDebt={() => openTransactionModalWithType('debt')}
               onOpenPaymentModal={(debt) => setPaymentModalData({ item: debt, type: 'debt' })}
+              onOpenIncreaseModal={(debt) => setIncreaseModalData({ item: debt, type: 'debt' })}
               onLiquidateDebt={handleLiquidateDebt}
               onDeleteDebt={handleDeleteDebt}
               onBackToDashboard={() => setActiveTab('dashboard')}
@@ -612,6 +691,7 @@ export const App: React.FC = () => {
               loans={loans}
               onAddLoan={() => openTransactionModalWithType('loan')}
               onOpenPaymentModal={(loan) => setPaymentModalData({ item: loan, type: 'loan' })}
+              onOpenIncreaseModal={(loan) => setIncreaseModalData({ item: loan, type: 'loan' })}
               onLiquidateLoan={handleLiquidateLoan}
               onDeleteLoan={handleDeleteLoan}
               onBackToDashboard={() => setActiveTab('dashboard')}
@@ -671,6 +751,15 @@ export const App: React.FC = () => {
         availableBalance={calculateAvailableBalance(incomes, loans, debts, expenses)}
         onClose={() => setPaymentModalData({ item: null, type: 'debt' })}
         onSubmitPayment={handlePaymentSubmit}
+      />
+
+      <IncreaseAmountModal
+        isOpen={!!increaseModalData.item}
+        currentUser={currentUser}
+        item={increaseModalData.item}
+        itemType={increaseModalData.type}
+        onClose={() => setIncreaseModalData({ item: null, type: 'debt' })}
+        onSubmitIncrease={handleIncreaseAmountSubmit}
       />
 
       {/* Mobile Bottom Navigation Bar (Visible on mobile/tablet) */}

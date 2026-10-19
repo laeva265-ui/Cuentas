@@ -89,6 +89,7 @@ export type DebtCategory =
   | 'Otros';
 
 export type PaymentSource = 'available_balance' | 'external';
+export type MovementType = 'abono' | 'monto_deuda';
 
 export interface DebtPayment {
   id: string;
@@ -96,6 +97,8 @@ export interface DebtPayment {
   date: string;
   note?: string;
   source?: PaymentSource;
+  type?: MovementType;
+  balanceAfter?: number;
 }
 
 export interface Debt {
@@ -124,6 +127,8 @@ export interface LoanPayment {
   date: string;
   note?: string;
   source?: PaymentSource;
+  type?: MovementType;
+  balanceAfter?: number;
 }
 
 export interface Loan {

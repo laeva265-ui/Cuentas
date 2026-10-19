@@ -71,7 +71,7 @@ export const FinancialAIAssistant: React.FC<FinancialAIAssistantProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#F0F4F8] p-4 md:p-6 pb-24">
+    <div className="min-h-screen theme-app-bg p-4 md:p-6 pb-24">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Navigation */}
         <button 
@@ -200,7 +200,7 @@ export const FinancialAIAssistant: React.FC<FinancialAIAssistantProps> = ({
                 </div>
               </div>
               
-              <div className="bg-[#F0F4F8] p-5 rounded-xl flex items-center justify-between border border-blue-100">
+              <div className="bg-slate-50/90 p-5 rounded-xl flex items-center justify-between border border-slate-200">
                 <div>
                   <p className="text-sm text-slate-600 font-medium">Tiempo actual</p>
                   <p className="text-2xl font-bold text-slate-900">{currentMonthsToPayoff} meses</p>

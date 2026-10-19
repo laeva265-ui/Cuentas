@@ -10,6 +10,8 @@ export interface ThemeDefinition {
   accentColor: string;
   bgGradient: string;
   previewColors: [string, string, string]; // [primary, secondary, accent]
+  appBgColor: string;
+  appBgName: string;
 }
 
 export const APP_THEMES: ThemeDefinition[] = [
@@ -23,6 +25,8 @@ export const APP_THEMES: ThemeDefinition[] = [
     accentColor: '#D4A853',
     bgGradient: 'from-[#0B1A2E] via-[#122B4A] to-[#1A3A5C]',
     previewColors: ['#0B1A2E', '#1A3A5C', '#D4A853'],
+    appBgColor: '#F1F5F9',
+    appBgName: 'Azul Slate Glacial',
   },
   {
     id: 'emerald',
@@ -34,6 +38,8 @@ export const APP_THEMES: ThemeDefinition[] = [
     accentColor: '#34D399',
     bgGradient: 'from-[#064E3B] via-[#047857] to-[#059669]',
     previewColors: ['#064E3B', '#047857', '#34D399'],
+    appBgColor: '#EFF6F2',
+    appBgName: 'Verde Menta Suave',
   },
   {
     id: 'burgundy',
@@ -45,6 +51,8 @@ export const APP_THEMES: ThemeDefinition[] = [
     accentColor: '#FDA4AF',
     bgGradient: 'from-[#4C0519] via-[#881337] to-[#BE123C]',
     previewColors: ['#4C0519', '#881337', '#FDA4AF'],
+    appBgColor: '#FAF2F4',
+    appBgName: 'Crema Rubí Pastel',
   },
   {
     id: 'gold',
@@ -56,6 +64,8 @@ export const APP_THEMES: ThemeDefinition[] = [
     accentColor: '#FDE047',
     bgGradient: 'from-[#291E03] via-[#453205] to-[#785409]',
     previewColors: ['#291E03', '#5E4207', '#FDE047'],
+    appBgColor: '#FAF7EE',
+    appBgName: 'Champagne y Marfil',
   },
   {
     id: 'purple',
@@ -67,6 +77,8 @@ export const APP_THEMES: ThemeDefinition[] = [
     accentColor: '#D8B4FE',
     bgGradient: 'from-[#2E1065] via-[#4C1D95] to-[#6B21A8]',
     previewColors: ['#2E1065', '#4C1D95', '#D8B4FE'],
+    appBgColor: '#F5F2F9',
+    appBgName: 'Lavanda Niebla',
   },
   {
     id: 'slate',
@@ -78,6 +90,8 @@ export const APP_THEMES: ThemeDefinition[] = [
     accentColor: '#94A3B8',
     bgGradient: 'from-[#0F172A] via-[#1E293B] to-[#334155]',
     previewColors: ['#0F172A', '#1E293B', '#94A3B8'],
+    appBgColor: '#F1F3F5',
+    appBgName: 'Titanio Platino',
   },
   {
     id: 'ocean',
@@ -89,6 +103,8 @@ export const APP_THEMES: ThemeDefinition[] = [
     accentColor: '#7DD3FC',
     bgGradient: 'from-[#082F49] via-[#0C4A6E] to-[#0284C7]',
     previewColors: ['#082F49', '#0C4A6E', '#7DD3FC'],
+    appBgColor: '#EFF6FA',
+    appBgName: 'Aguamarina Cristal',
   },
 ];
 
@@ -99,6 +115,9 @@ export const getThemeById = (id?: ColorThemeId): ThemeDefinition => {
 export const applyAppTheme = (themeId: ColorThemeId = 'navy') => {
   try {
     document.documentElement.setAttribute('data-theme', themeId);
+    if (document.body) {
+      document.body.setAttribute('data-theme', themeId);
+    }
     localStorage.setItem('finflow_app_theme', themeId);
   } catch (e) {
     console.error('Error applying theme:', e);
