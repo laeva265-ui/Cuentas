@@ -48,18 +48,18 @@ export function Navbar({
 
   return (
     <div className="flex flex-col safe-area-top">
-      <header className="h-16 sm:h-20 bg-gradient-to-r from-[#0B1A2E] to-[#1A3A5C] text-white flex items-center justify-between px-3 sm:px-6 shadow-md relative z-20">
+      <header className="h-16 sm:h-20 bank-header-gradient text-white flex items-center justify-between px-3 sm:px-6 shadow-md relative z-20">
         {/* Left: Logo */}
         <div 
           className="flex items-center gap-2 cursor-pointer shrink-0"
           onClick={() => onNavigate('dashboard')}
         >
-          <div className="bg-white/10 p-1.5 sm:p-2 rounded-lg text-[#D4A853]">
+          <div className="bg-white/10 p-1.5 sm:p-2 rounded-lg gold-accent">
             <Landmark className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
           <div className="flex items-center gap-1.5">
             <span className="font-bold text-base sm:text-xl tracking-tight">FinFlow Bank</span>
-            <span className="bg-[#D4A853] text-[#0B1A2E] text-[9px] sm:text-[10px] font-extrabold px-1.5 py-0.5 rounded uppercase hidden md:inline-block">
+            <span className="gold-bg text-[9px] sm:text-[10px] font-extrabold px-1.5 py-0.5 rounded uppercase hidden md:inline-block">
               Digital
             </span>
           </div>

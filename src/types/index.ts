@@ -7,6 +7,8 @@ export interface CurrencyConfig {
   locale: string;
 }
 
+export type ColorThemeId = 'navy' | 'emerald' | 'burgundy' | 'gold' | 'purple' | 'slate' | 'ocean';
+
 export interface User {
   id: string;
   name: string;
@@ -14,6 +16,8 @@ export interface User {
   avatarUrl: string;
   currency: CurrencyCode;
   theme: 'dark' | 'light';
+  colorTheme?: ColorThemeId;
+  biometricsEnabled?: boolean;
   monthlyBudget: number;
   pinCode?: string;
   bio?: string;

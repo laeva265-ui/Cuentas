@@ -86,7 +86,7 @@ export function DashboardOverview({
     <div className="space-y-6 pb-12">
       
       {/* 1. Welcome Section */}
-      <div className="virtual-card bg-gradient-to-br from-[#0B1A2E] via-[#122B4A] to-[#1A3A5C] rounded-2xl p-4 sm:p-6 md:p-8 text-white flex flex-col md:flex-row items-center justify-between shadow-lg relative overflow-hidden gap-6">
+      <div className="virtual-card rounded-2xl p-4 sm:p-6 md:p-8 text-white flex flex-col md:flex-row items-center justify-between shadow-lg relative overflow-hidden gap-6">
         {/* Abstract background elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#D4A853] opacity-10 rounded-full translate-y-1/3 -translate-x-1/4 blur-2xl"></div>

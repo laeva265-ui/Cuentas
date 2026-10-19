@@ -19,6 +19,107 @@
 ::-webkit-scrollbar-thumb:hover { background: #64748B; }
 
 /* ============================================================
+   BANKING COLOR THEME SYSTEM (CSS VARIABLES)
+   ============================================================ */
+:root, [data-theme="navy"] {
+  --brand-primary: #0B1A2E;
+  --brand-secondary: #122B4A;
+  --brand-tertiary: #1A3A5C;
+  --brand-gradient-start: #0B1A2E;
+  --brand-gradient-mid: #122B4A;
+  --brand-gradient-end: #1A3A5C;
+  --brand-accent: #D4A853;
+  --brand-accent-text: #0B1A2E;
+  --brand-accent-light: rgba(212, 168, 83, 0.15);
+  --brand-highlight: #1A56DB;
+  --brand-glow: rgba(26, 86, 219, 0.15);
+}
+
+[data-theme="emerald"] {
+  --brand-primary: #064E3B;
+  --brand-secondary: #047857;
+  --brand-tertiary: #059669;
+  --brand-gradient-start: #064E3B;
+  --brand-gradient-mid: #047857;
+  --brand-gradient-end: #059669;
+  --brand-accent: #34D399;
+  --brand-accent-text: #064E3B;
+  --brand-accent-light: rgba(52, 211, 153, 0.15);
+  --brand-highlight: #059669;
+  --brand-glow: rgba(5, 150, 105, 0.15);
+}
+
+[data-theme="burgundy"] {
+  --brand-primary: #4C0519;
+  --brand-secondary: #881337;
+  --brand-tertiary: #BE123C;
+  --brand-gradient-start: #4C0519;
+  --brand-gradient-mid: #881337;
+  --brand-gradient-end: #BE123C;
+  --brand-accent: #FDA4AF;
+  --brand-accent-text: #4C0519;
+  --brand-accent-light: rgba(253, 164, 175, 0.15);
+  --brand-highlight: #E11D48;
+  --brand-glow: rgba(225, 29, 72, 0.15);
+}
+
+[data-theme="gold"] {
+  --brand-primary: #291E03;
+  --brand-secondary: #453205;
+  --brand-tertiary: #785409;
+  --brand-gradient-start: #291E03;
+  --brand-gradient-mid: #453205;
+  --brand-gradient-end: #785409;
+  --brand-accent: #FDE047;
+  --brand-accent-text: #291E03;
+  --brand-accent-light: rgba(253, 224, 71, 0.15);
+  --brand-highlight: #D97706;
+  --brand-glow: rgba(217, 119, 6, 0.15);
+}
+
+[data-theme="purple"] {
+  --brand-primary: #2E1065;
+  --brand-secondary: #4C1D95;
+  --brand-tertiary: #6B21A8;
+  --brand-gradient-start: #2E1065;
+  --brand-gradient-mid: #4C1D95;
+  --brand-gradient-end: #6B21A8;
+  --brand-accent: #D8B4FE;
+  --brand-accent-text: #2E1065;
+  --brand-accent-light: rgba(216, 180, 254, 0.15);
+  --brand-highlight: #7C3AED;
+  --brand-glow: rgba(124, 58, 237, 0.15);
+}
+
+[data-theme="slate"] {
+  --brand-primary: #0F172A;
+  --brand-secondary: #1E293B;
+  --brand-tertiary: #334155;
+  --brand-gradient-start: #0F172A;
+  --brand-gradient-mid: #1E293B;
+  --brand-gradient-end: #334155;
+  --brand-accent: #CBD5E1;
+  --brand-accent-text: #0F172A;
+  --brand-accent-light: rgba(203, 213, 225, 0.15);
+  --brand-highlight: #475569;
+  --brand-glow: rgba(71, 85, 105, 0.15);
+}
+
+[data-theme="ocean"] {
+  --brand-primary: #082F49;
+  --brand-secondary: #0C4A6E;
+  --brand-tertiary: #0284C7;
+  --brand-gradient-start: #082F49;
+  --brand-gradient-mid: #0C4A6E;
+  --brand-gradient-end: #0284C7;
+  --brand-accent: #7DD3FC;
+  --brand-accent-text: #082F49;
+  --brand-accent-light: rgba(125, 211, 252, 0.15);
+  --brand-highlight: #0284C7;
+  --brand-glow: rgba(2, 132, 199, 0.15);
+}
+
+/* ============================================================
    BANKING CARD SYSTEM
    ============================================================ */
 .bank-card {
@@ -37,11 +138,12 @@
 
 /* Virtual Credit/Debit Card */
 .virtual-card {
-  background: linear-gradient(135deg, #0B1A2E 0%, #1A3A5C 50%, #0F2744 100%);
+  background: linear-gradient(135deg, var(--brand-gradient-start) 0%, var(--brand-gradient-mid) 50%, var(--brand-gradient-end) 100%) !important;
   border-radius: 1.25rem;
   color: white;
   position: relative;
   overflow: hidden;
+  transition: background 0.3s ease;
 }
 .virtual-card::before {
   content: '';
@@ -51,7 +153,7 @@
   width: 300px;
   height: 300px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
 }
 .virtual-card::after {
   content: '';
@@ -61,12 +163,13 @@
   width: 250px;
   height: 250px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(26, 86, 219, 0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--brand-glow) 0%, transparent 70%);
 }
 
 /* Banking Gradient Header */
 .bank-header-gradient {
-  background: linear-gradient(135deg, #0B1A2E 0%, #122B4A 60%, #1A3A5C 100%);
+  background: linear-gradient(135deg, var(--brand-gradient-start) 0%, var(--brand-gradient-mid) 60%, var(--brand-gradient-end) 100%) !important;
+  transition: background 0.3s ease;
 }
 
 /* Banking Section Divider */
@@ -78,12 +181,20 @@
   color: #64748B;
 }
 
-/* Gold accent for premium elements */
-.gold-accent {
-  color: #D4A853;
+/* Theme Accents */
+.gold-accent, .theme-accent-text {
+  color: var(--brand-accent) !important;
 }
-.gold-bg {
-  background: linear-gradient(135deg, #D4A853 0%, #E8C374 100%);
+.gold-bg, .theme-accent-bg {
+  background-color: var(--brand-accent) !important;
+  color: var(--brand-accent-text) !important;
+}
+.theme-btn-primary {
+  background-color: var(--brand-primary) !important;
+  color: #FFFFFF !important;
+}
+.theme-btn-primary:hover {
+  background-color: var(--brand-secondary) !important;
 }
 
 /* Trust Badge */

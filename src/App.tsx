@@ -14,6 +14,7 @@ import { StorageService } from './services/storageService';
 import { ExcelApiService } from './services/excelApiService';
 import { GoogleAppsScriptService } from './services/appsScriptService';
 import { calculateFinancialHealth, calculateAvailableBalance, fetchLiveRates } from './utils/formatters';
+import { applyAppTheme } from './utils/themes';
 
 // Components
 import { Navbar } from './components/layout/Navbar';
@@ -33,6 +34,12 @@ import { PwaInstallPrompt } from './components/pwa/PwaInstallPrompt';
 export const App: React.FC = () => {
   // Current active user
   const [currentUser, setCurrentUser] = useState<User>(() => AuthService.getCurrentUser());
+
+  // Apply theme dynamically
+  useEffect(() => {
+    const savedTheme = currentUser.colorTheme || (localStorage.getItem('finflow_app_theme') as any) || 'navy';
+    applyAppTheme(savedTheme);
+  }, [currentUser.colorTheme]);
 
   // User-isolated financial data
   const [expenses, setExpenses] = useState<Expense[]>([]);
